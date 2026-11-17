@@ -208,7 +208,7 @@ A lock-free token bucket rate limiter enables global and per-download speed thro
 
 #### 1. Clone the Repository
 ```powershell
-git clone https://github.com/Twix/OctoHeft.git
+git clone https://github.com/username/OctoHeft.git
 cd OctoHeft
 ```
 
