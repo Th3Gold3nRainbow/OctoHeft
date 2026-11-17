@@ -103,7 +103,7 @@ graph TD
 4. **Unified Native Messaging Host & Named Pipe IPC (`src-tauri/src/engine/native_host.rs`)**:
    - Replaces external Python/batch wrappers directly inside `OctoHeft.exe` via `should_run_as_native_host(&args)` before Tauri/WebView2 initialization.
    - Reads/writes 32-bit length-prefixed JSON frames over stdio, validates HTTP/HTTPS URLs (`is_valid_external_url`, rejecting `blob:`/`data:`/`file:`), routes either single downloads or split video+audio pairs (`videoUrl` + `audioUrl`) through `\\.\pipe\OctoHeftNativeIpc` to `DownloadEngine` / `MediaMuxer`, or queues offline into `StateStore`.
-   - Native Host manifests (`com.antigravity.octoheft*.json`) are registered in HKCU across Google Chrome, Microsoft Edge, Brave, and Mozilla Firefox.
+   - Native Host manifests (`com.octoheft.downloader*.json`) are registered in HKCU across Google Chrome, Microsoft Edge, Brave, and Mozilla Firefox.
 
 ---
 
@@ -195,7 +195,7 @@ A high-precision, lock-free token bucket limiter ensures bandwidth compliance ac
 
 1. **OS Locale Detection (`src-tauri/src/engine/settings.rs`)**: Queries Windows UI language via `GetUserDefaultLocaleName` (`Win32_Globalization`), normalizes BCP-47 tags across `en`, `fr`, `es`, `de`, `ar`, `ru`, and `zh`, and persists choices in `settings_state.json`.
 2. **React Context & CSS Logical RTL (`src/i18n/index.tsx`)**: Dynamically updates `document.documentElement.lang` and `document.documentElement.dir` (`rtl` for Arabic, `ltr` otherwise) without restart, backed by Tailwind CSS logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`, `text-start`, `text-end`, `border-s`, `border-e`).
-3. **Multi-Language NSIS Installer (`tauri.conf.json`, `nsis/installer.nsi`, `nsis/hooks.nsh`)**: Enables `English`, `French`, `Spanish`, `German`, `Arabic`, `Russian`, and `SimpChinese` installer UIs (`displayLanguageSelector: true`), injects localized `NSIS_HOOK_LANGSTRINGS` (`BrowserExtCheckboxText`), applies `nsDialogs::SetRTL 1` on the Finish page when `$(^RTL) = 1`, registers `NativeMessagingHosts\com.antigravity.octoheft` and `.octodl` associations, and cleanly purges all keys/manifests/resources on uninstall.
+3. **Multi-Language NSIS Installer (`tauri.conf.json`, `nsis/installer.nsi`, `nsis/hooks.nsh`)**: Enables `English`, `French`, `Spanish`, `German`, `Arabic`, `Russian`, and `SimpChinese` installer UIs (`displayLanguageSelector: true`), injects localized `NSIS_HOOK_LANGSTRINGS` (`BrowserExtCheckboxText`), applies `nsDialogs::SetRTL 1` on the Finish page when `$(^RTL) = 1`, registers `NativeMessagingHosts\com.octoheft.downloader` and `.octodl` associations, and cleanly purges all keys/manifests/resources on uninstall.
 
 ---
 

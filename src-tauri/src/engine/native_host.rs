@@ -126,8 +126,8 @@ pub fn should_run_as_native_host(args: &[String]) -> bool {
             || lower.starts_with("chrome-extension://")
             || lower.starts_with("moz-extension://")
             || lower.starts_with("--parent-window=")
-            || lower.ends_with("com.antigravity.octoheft.json")
-            || lower.ends_with("com.antigravity.octoheft.firefox.json")
+            || lower.ends_with("com.octoheft.downloader.json")
+            || lower.ends_with("com.octoheft.downloader.firefox.json")
     })
 }
 
@@ -1420,8 +1420,8 @@ mod tests {
         ]));
         assert!(should_run_as_native_host(&[
             "OctoHeft.exe".to_string(),
-            r"C:\OctoHeft\resources\com.antigravity.octoheft.firefox.json".to_string(),
-            "octoheft@antigravity.dev".to_string()
+            r"C:\OctoHeft\resources\com.octoheft.downloader.firefox.json".to_string(),
+            "octoheft@octoheft.dev".to_string()
         ]));
     }
 

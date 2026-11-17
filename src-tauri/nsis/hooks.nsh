@@ -62,9 +62,9 @@ Var OctoHeftLangCode
   CreateDirectory "$INSTDIR\resources"
   ${StrRep} $EscapedInstDir "$INSTDIR" "\" "\\"
 
-  FileOpen $0 "$INSTDIR\resources\com.antigravity.octoheft.json" w
+  FileOpen $0 "$INSTDIR\resources\com.octoheft.downloader.json" w
   FileWrite $0 '{$\r$\n'
-  FileWrite $0 '  "name": "com.antigravity.octoheft",$\r$\n'
+  FileWrite $0 '  "name": "com.octoheft.downloader",$\r$\n'
   FileWrite $0 '  "description": "OctoHeft Modern Download Accelerator Native Messaging Host",$\r$\n'
   FileWrite $0 '  "path": "$EscapedInstDir\\OctoHeft.exe",$\r$\n'
   FileWrite $0 '  "type": "stdio",$\r$\n'
@@ -74,23 +74,23 @@ Var OctoHeftLangCode
   FileWrite $0 '}$\r$\n'
   FileClose $0
 
-  FileOpen $0 "$INSTDIR\resources\com.antigravity.octoheft.firefox.json" w
+  FileOpen $0 "$INSTDIR\resources\com.octoheft.downloader.firefox.json" w
   FileWrite $0 '{$\r$\n'
-  FileWrite $0 '  "name": "com.antigravity.octoheft",$\r$\n'
+  FileWrite $0 '  "name": "com.octoheft.downloader",$\r$\n'
   FileWrite $0 '  "description": "OctoHeft Modern Download Accelerator Native Messaging Host",$\r$\n'
   FileWrite $0 '  "path": "$EscapedInstDir\\OctoHeft.exe",$\r$\n'
   FileWrite $0 '  "type": "stdio",$\r$\n'
   FileWrite $0 '  "allowed_extensions": [$\r$\n'
-  FileWrite $0 '    "octoheft@antigravity.dev"$\r$\n'
+  FileWrite $0 '    "octoheft@octoheft.dev"$\r$\n'
   FileWrite $0 '  ]$\r$\n'
   FileWrite $0 '}$\r$\n'
   FileClose $0
 
   ; Register Native Messaging Host keys for Chrome, Edge, Brave, and Firefox
-  WriteRegStr HKCU "Software\Google\Chrome\NativeMessagingHosts\com.antigravity.octoheft" "" "$INSTDIR\resources\com.antigravity.octoheft.json"
-  WriteRegStr HKCU "Software\Microsoft\Edge\NativeMessagingHosts\com.antigravity.octoheft" "" "$INSTDIR\resources\com.antigravity.octoheft.json"
-  WriteRegStr HKCU "Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.antigravity.octoheft" "" "$INSTDIR\resources\com.antigravity.octoheft.json"
-  WriteRegStr HKCU "Software\Mozilla\NativeMessagingHosts\com.antigravity.octoheft" "" "$INSTDIR\resources\com.antigravity.octoheft.firefox.json"
+  WriteRegStr HKCU "Software\Google\Chrome\NativeMessagingHosts\com.octoheft.downloader" "" "$INSTDIR\resources\com.octoheft.downloader.json"
+  WriteRegStr HKCU "Software\Microsoft\Edge\NativeMessagingHosts\com.octoheft.downloader" "" "$INSTDIR\resources\com.octoheft.downloader.json"
+  WriteRegStr HKCU "Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.octoheft.downloader" "" "$INSTDIR\resources\com.octoheft.downloader.json"
+  WriteRegStr HKCU "Software\Mozilla\NativeMessagingHosts\com.octoheft.downloader" "" "$INSTDIR\resources\com.octoheft.downloader.firefox.json"
 !macroend
 
 !macro NSIS_HOOK_FINISH_SHOW
@@ -159,13 +159,13 @@ Var OctoHeftLangCode
   DeleteRegKey HKCU "Software\Classes\*\shell\OctoHeftChecksum"
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "OctoHeft"
 
-  DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\com.antigravity.octoheft"
-  DeleteRegKey HKCU "Software\Microsoft\Edge\NativeMessagingHosts\com.antigravity.octoheft"
-  DeleteRegKey HKCU "Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.antigravity.octoheft"
-  DeleteRegKey HKCU "Software\Mozilla\NativeMessagingHosts\com.antigravity.octoheft"
+  DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\com.octoheft.downloader"
+  DeleteRegKey HKCU "Software\Microsoft\Edge\NativeMessagingHosts\com.octoheft.downloader"
+  DeleteRegKey HKCU "Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.octoheft.downloader"
+  DeleteRegKey HKCU "Software\Mozilla\NativeMessagingHosts\com.octoheft.downloader"
 
-  Delete "$INSTDIR\resources\com.antigravity.octoheft.json"
-  Delete "$INSTDIR\resources\com.antigravity.octoheft.firefox.json"
+  Delete "$INSTDIR\resources\com.octoheft.downloader.json"
+  Delete "$INSTDIR\resources\com.octoheft.downloader.firefox.json"
   RMDir /r "$INSTDIR\resources\extension"
   RMDir "$INSTDIR\resources"
   RMDir "$INSTDIR"

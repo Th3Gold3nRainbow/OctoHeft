@@ -1,7 +1,7 @@
 # OctoHeft Technical Architecture & Engineering Reference
 
 **Product:** OctoHeft (Crate: `octoheft-engine` v0.1.0, UI Shell v2.0)  
-**Bundle Identifier:** `com.antigravity.octoheft`  
+**Bundle Identifier:** `com.octoheft.downloader`  
 **Target Platform:** Windows 10 & Windows 11 (x64, `PerMonitorV2` DPI-aware)  
 **Methodology:** Clean-Room Reverse Architecture Specification (REA-Prompts Framework, Section 4)  
 **Primary Runtime Stack:** Rust (2021 Edition), Tauri v2, Tokio, Reqwest (`rustls`), Win32/COM (`windows-sys`), React 18, TypeScript, Tailwind CSS v3  
@@ -290,11 +290,11 @@ Frontend styles (`src/index.css`, `tailwind.config.js`) and layout components (`
 
 ### 4.1 Manifest V3 Extension Architecture (`native_messaging/extension/`)
 
-- **Deterministic Cryptographic Extension Identity (`manifest.json`)**: Embeds a fixed RSA public `"key"` deriving constant Chromium Extension ID `kalfiofhhhcdnnkjehidagebfikodflp` across unpacked developer installs (`chrome://extensions`, `edge://extensions`, `brave://extensions`). Firefox binds extension ID `octoheft@antigravity.dev`.
+- **Deterministic Cryptographic Extension Identity (`manifest.json`)**: Embeds a fixed RSA public `"key"` deriving constant Chromium Extension ID `kalfiofhhhcdnnkjehidagebfikodflp` across unpacked developer installs (`chrome://extensions`, `edge://extensions`, `brave://extensions`). Firefox binds extension ID `octoheft@octoheft.dev`.
 - **Permissions**: Requests `downloads`, `webRequest`, `nativeMessaging`, `storage`, `tabs`, `activeTab`, `cookies`, and host access `<all_urls>`.
 - **Automatic Download Interception (`background.js`)**:
   - Maintains a 53-token static baseline (`DEFAULT_IDM_EXTENSIONS`) and dynamically syncs the live `SettingsStore` list (54 default tokens including `DAT`, plus user wildcards like `R0*`, `R1*`) via Native Messaging `get_settings` on startup, install, tab activation, and download creation, caching in `chrome.storage.local`.
-  - Hooks `chrome.downloads.onDeterminingFilename`: ignores non-HTTP schemes (`blob:`, `data:`, `file:`) and extension-self transfers, checks both resolved filename and URL path extension against `activeExactExtensions` + `activeWildcardRegexes`, cancels and erases the native browser download (`chrome.downloads.cancel` + `erase`), collects scoped cookies via `chrome.cookies.getAll`, and dispatches `{ action: "download", ... }` to `com.antigravity.octoheft`.
+  - Hooks `chrome.downloads.onDeterminingFilename`: ignores non-HTTP schemes (`blob:`, `data:`, `file:`) and extension-self transfers, checks both resolved filename and URL path extension against `activeExactExtensions` + `activeWildcardRegexes`, cancels and erases the native browser download (`chrome.downloads.cancel` + `erase`), collects scoped cookies via `chrome.cookies.getAll`, and dispatches `{ action: "download", ... }` to `com.octoheft.downloader`.
 - **Generic Stream Sniffer & Floating Page Overlay (`background.js`, `content.js`)**:
   - `chrome.webRequest.onHeadersReceived` captures non-YouTube HTTP streams matching `MEDIA_MIMES` or `MEDIA_EXT_REGEX` (`.mp4`, `.mkv`, `.webm`, `.m3u8`, `.mpd`, etc.) above `512 KiB` or streaming manifests, populating the per-tab popup list (`GET_TAB_MEDIA`). Explicitly skips YouTube/`googlevideo.com` URLs to eliminate segmented MSE noise.
   - `content.js` injects an anchored `Download Video` floating button inside `#movie_player`, `#shorts-player`, or `.html5-video-player` using `HIDE_GRACE_MS = 800`, lock-on-hover protection, `MutationObserver`, and `yt-navigate-finish` SPA listener. Clicking sends `GRAB_VIDEO` (`canonicalizeGrabUrl` + `gatherCookieContext`) directly to `OctoMedia` rather than parsing obfuscated player scripts in JS.
@@ -507,7 +507,7 @@ OctoHeft separates zero-dependency native execution from optional/managed third-
   - **Custom URI Scheme**: `HKCU\Software\Classes\octoheft` -> `"<INSTDIR>\OctoHeft.exe" "%1"`.
   - **Queue File Association**: `.octodl` (`OctoHeft Queue File`).
   - **Explorer Context Menu**: `HKCU\Software\Classes\*\shell\OctoHeftChecksum` (`Verify checksum with OctoHeft`) -> `"<INSTDIR>\OctoHeft.exe" --verify "%1"`.
-  - **Native Messaging Registration**: Generates `com.antigravity.octoheft.json` (Chrome/Edge/Brave) and `com.antigravity.octoheft.firefox.json` inside `$INSTDIR\resources\` and registers keys under `HKCU\Software\{Google\Chrome,Microsoft\Edge,BraveSoftware\Brave-Browser,Mozilla}\NativeMessagingHosts\com.antigravity.octoheft`.
+  - **Native Messaging Registration**: Generates `com.octoheft.downloader.json` (Chrome/Edge/Brave) and `com.octoheft.downloader.firefox.json` inside `$INSTDIR\resources\` and registers keys under `HKCU\Software\{Google\Chrome,Microsoft\Edge,BraveSoftware\Brave-Browser,Mozilla}\NativeMessagingHosts\com.octoheft.downloader`.
   - **Finish-Page Activation Wizard**: Checked by default; launches detected `chrome.exe` / `msedge.exe` / `brave.exe` directly to `<browser>://extensions` via `nsis_tauri_utils::RunAsUser`.
   - **Clean Uninstall (`NSIS_HOOK_POSTUNINSTALL`)**: Removes all `HKCU` integration keys, manifests, extension assets, startup entries, and (when requested outside updates) `%APPDATA%\octoheft` and `%LOCALAPPDATA%\OctoHeft`.
 

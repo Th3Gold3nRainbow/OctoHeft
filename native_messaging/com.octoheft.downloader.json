@@ -1,5 +1,5 @@
 {
-  "name": "com.antigravity.octoheft",
+  "name": "com.octoheft.downloader",
   "description": "OctoHeft Modern Download Accelerator Native Messaging Host",
   "path": "OctoHeft.exe",
   "type": "stdio",

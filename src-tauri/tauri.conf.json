@@ -3,7 +3,7 @@
   "productName": "OctoHeft",
   "mainBinaryName": "OctoHeft",
   "version": "0.1.0",
-  "identifier": "com.antigravity.octoheft",
+  "identifier": "com.octoheft.downloader",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",

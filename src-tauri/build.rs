@@ -72,7 +72,7 @@ fn enrich_windows_rc_and_recompile(out_path: &std::path::Path) {
 
             let manifest_xml = format!(
                 r#"<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity version="{four_part_ver}" processorArchitecture="*" name="com.antigravity.octoheft" type="win32" />
+  <assemblyIdentity version="{four_part_ver}" processorArchitecture="*" name="com.octoheft.downloader" type="win32" />
   <description>{}</description>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>

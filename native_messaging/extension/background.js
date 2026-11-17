@@ -1,6 +1,6 @@
 // OctoHeft Manifest V3 Background Service Worker, Generic Media Sniffer & Global Download Interceptor
 
-const NATIVE_HOST_NAME = "com.antigravity.octoheft";
+const NATIVE_HOST_NAME = "com.octoheft.downloader";
 const STORAGE_EXTENSIONS_KEY = "octoheftInterceptExtensions";
 
 // In-memory generic non-YouTube media store indexed by tabId

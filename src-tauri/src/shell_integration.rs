@@ -5,9 +5,9 @@ use tauri::{Emitter, Manager};
 use winreg::enums::*;
 use winreg::RegKey;
 
-pub const NATIVE_HOST_ID: &str = "com.antigravity.octoheft";
+pub const NATIVE_HOST_ID: &str = "com.octoheft.downloader";
 pub const CHROME_EXTENSION_ID: &str = "kalfiofhhhcdnnkjehidagebfikodflp";
-pub const FIREFOX_EXTENSION_ID: &str = "octoheft@antigravity.dev";
+pub const FIREFOX_EXTENSION_ID: &str = "octoheft@octoheft.dev";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrowserStatusInfo {

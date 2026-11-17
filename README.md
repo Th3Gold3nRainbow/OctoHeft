@@ -261,7 +261,7 @@ OctoHeft/
 │   │   ├── content.js                    # Floating video grabber overlay
 │   │   ├── manifest.json                 # Manifest V3 specification
 │   │   └── popup.html / popup.js         # Extension popup interface
-│   └── com.antigravity.octoheft.json     # Native Messaging host manifest template
+│   └── com.octoheft.downloader.json     # Native Messaging host manifest template
 ├── src/                                  # React 18 + Tailwind CSS Frontend
 │   ├── components/                       # Dashboard, Modals, Tables, and Speed Graph
 │   ├── hooks/useTheme.ts                 # Light / Dark / Neon theme state machine
