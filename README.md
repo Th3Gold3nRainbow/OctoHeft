@@ -3,7 +3,7 @@
 # OctoHeft
 
 <p align="center">
-  <img src="assets/logo.png" alt="OctoHeft Logo" width="100" />
+  <img src="docs/octoheft-logo.png" alt="OctoHeft Logo" width="100" />
 </p>
 
 ### *High-Speed, Zero-Assembly Parallel Download Accelerator for Windows*
