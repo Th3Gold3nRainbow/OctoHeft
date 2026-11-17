@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "OctoHeft Integration Module",
+  "version": "1.1.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz3Rcg2kJc9Zq2HOuRj5WleZNMUF76HrtxddYvkhalJ1QWKa7wyzDeYWrHgOtrYzQg7zo/FGR9+Ju21Fdyy0FWmPfHxpDZCd68a0LeenGCFX9zM9gZril03qqICZpHrbE1PlMvX6mnoxaitO8qqbSWwqU6Yv7z7Xf5+MC6B26F7hQPbUU48yAaFRrQzSi2aO/e2K4UaBaDu8k2aKVNscF9peDC/YOYg4R5FZYLuB0LGgn/UjjvgA1+V3iN7dO7zcY9ipNqUeoho+hA6m2l9IlUGfs8vohPiIhpVemHySD6uW8aLW1Q3eaMRtBepZ0N/GjU2KyOyXZoowTmQjZIPS0+wIDAQAB",
+  "description": "OctoMedia handoff, media sniffer, and high-speed download accelerator integration for OctoHeft",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["overlay.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "permissions": [
+    "downloads",
+    "webRequest",
+    "nativeMessaging",
+    "storage",
+    "tabs",
+    "activeTab",
+    "cookies"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}

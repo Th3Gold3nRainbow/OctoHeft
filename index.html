@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('octoheft_theme');
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var mode =
+            saved === 'light' || saved === 'dark' || saved === 'neon'
+              ? saved
+              : prefersDark
+                ? 'dark'
+                : 'light';
+          var root = document.documentElement;
+          root.classList.remove('dark', 'neon');
+          if (mode === 'dark') {
+            root.classList.add('dark');
+          } else if (mode === 'neon') {
+            root.classList.add('dark', 'neon');
+          }
+          var meta = document.querySelector('meta[name="color-scheme"]');
+          if (meta) {
+            meta.setAttribute(
+              'content',
+              saved === 'light'
+                ? 'light'
+                : saved === 'dark' || saved === 'neon'
+                  ? 'dark'
+                  : 'light dark'
+            );
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OctoHeft — Modern Download Accelerator</title>
+  </head>
+  <body class="bg-app bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased overflow-hidden select-none">
+    <div id="root"></div>
+    <script type="module" src="./src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OctoHeft Sniffer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      width: 376px;
+      margin: 0;
+      padding: 12px;
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      font-size: 12px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #0369a1;
+    }
+    .brand img {
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+    }
+    .count-pill {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .octomedia-hero {
+      background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 75%);
+      border: 1px solid #7dd3fc;
+      border-radius: 10px;
+      padding: 11px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    .hero-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: #0c4a6e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .hero-tab-title {
+      font-size: 11px;
+      color: #475569;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin: 6px 2px;
+    }
+    .media-list {
+      max-height: 290px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .media-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .media-name {
+      font-weight: 600;
+      color: #0f172a;
+      word-break: break-word;
+      line-height: 1.35;
+    }
+    .media-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #475569;
+      font-size: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      gap: 8px;
+    }
+    .quality-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      border: 1px solid #bae6fd;
+    }
+    .btn-download {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-weight: 600;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .btn-download:hover {
+      background: #0369a1;
+    }
+    .btn-download:active {
+      transform: scale(0.99);
+    }
+    .btn-download:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+    .empty-state {
+      text-align: center;
+      color: #64748b;
+      padding: 18px 10px;
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <img src="icons/icon32.png" width="20" height="20" alt="OctoHeft" />
+      <span>OctoHeft Integration</span>
+    </div>
+    <span id="media-count" class="count-pill">0 streams</span>
+  </div>
+
+  <div class="octomedia-hero">
+    <div class="hero-title">
+      <span>OctoMedia Video Grabber</span>
+      <span class="quality-badge">4K / MKV / Audio</span>
+    </div>
+    <div id="tab-title" class="hero-tab-title">Inspecting active tab...</div>
+    <button type="button" id="btn-grab-page" class="btn-download">
+      Open Page in OctoMedia
+    </button>
+  </div>
+
+  <div class="section-label">Direct HTTP Streams</div>
+  <div id="media-container" class="media-list">
+    <div class="empty-state">No standalone HTTP streams detected on this tab. Use "Open Page in OctoMedia" above for YouTube or embedded players.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

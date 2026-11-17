@@ -1,0 +1,822 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+  --octoheft-bg: #f8fafc;
+  --octoheft-fg: #0f172a;
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #64748b;
+  --scrollbar-thumb-hover: #475569;
+  --surface-row: #ffffff;
+  --surface-row-hover: #f8fafc;
+  --surface-row-selected: #f0f9ff;
+  --surface-subtle: #f8fafc;
+  --border-subtle: #e2e8f0;
+  --border-row: #f1f5f9;
+  --border-card: #cbd5e1;
+  --text-col-label: #64748b;
+  --text-codec-label: #475569;
+  --toolbar-sep: rgb(203 213 225 / 0.9);
+  --octoheft-progress-track: #e2e8f0;
+  --octoheft-progress-fill: #0284c7;
+  --focus-ring: #0284c7;
+  --selection-bg: #bae6fd;
+  --selection-fg: #0f172a;
+  accent-color: #0284c7;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+:root:has(> head > meta[name='color-scheme'][content='dark']) {
+  color-scheme: dark;
+}
+
+:root:has(> head > meta[name='color-scheme'][content='light']) {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+  --octoheft-bg: #0f172a;
+  --octoheft-fg: #f1f5f9;
+  --scrollbar-track: #0f172a;
+  --scrollbar-thumb: #64748b;
+  --scrollbar-thumb-hover: #94a3b8;
+  --surface-row: #0f172a;
+  --surface-row-hover: #1e293b;
+  --surface-row-selected: #0c4a6e;
+  --surface-subtle: #1e293b;
+  --border-subtle: #334155;
+  --border-row: #1e293b;
+  --border-card: #334155;
+  --text-col-label: #94a3b8;
+  --text-codec-label: #cbd5e1;
+  --toolbar-sep: rgb(51 65 85 / 0.9);
+  --octoheft-progress-track: #1e293b;
+  --octoheft-progress-fill: #38bdf8;
+  --focus-ring: #38bdf8;
+  --selection-bg: #0369a1;
+  --selection-fg: #f8fafc;
+  accent-color: #38bdf8;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+html.neon {
+  color-scheme: dark;
+  --octoheft-bg: #00122e;
+  --octoheft-fg: #e2f1ff;
+  --scrollbar-track: #00122e;
+  --scrollbar-thumb: #0091c2;
+  --scrollbar-thumb-hover: #00d4ff;
+  --surface-row: #021a42;
+  --surface-row-hover: rgba(0, 195, 255, 0.08);
+  --surface-row-selected: rgba(0, 195, 255, 0.16);
+  --surface-subtle: #011638;
+  --border-subtle: rgba(0, 195, 255, 0.25);
+  --border-row: rgba(0, 195, 255, 0.16);
+  --border-card: rgba(0, 195, 255, 0.35);
+  --text-col-label: #7dd3fc;
+  --text-codec-label: #bae6fd;
+  --toolbar-sep: rgba(0, 195, 255, 0.3);
+  --octoheft-progress-track: #031e4d;
+  --octoheft-progress-fill: #00f0ff;
+  --focus-ring: #00f0ff;
+  --selection-bg: rgba(0, 240, 255, 0.28);
+  --selection-fg: #ffffff;
+  accent-color: #00f0ff;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    overflow: hidden;
+    background-color: var(--octoheft-bg);
+    color: var(--octoheft-fg);
+    font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  }
+
+  ::selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-fg);
+  }
+}
+
+/* Dark Slate Theme Overrides */
+html.dark body,
+html.dark #root,
+html.dark .bg-app {
+  background-color: #0f172a !important;
+  background-image: linear-gradient(135deg, #020617 0%, #0f172a 55%, #020617 100%) !important;
+  color: #f1f5f9;
+}
+
+html.dark .bg-card,
+html.dark .card-surface {
+  background-color: rgba(15, 23, 42, 0.88) !important;
+  border-color: rgba(51, 65, 85, 0.9) !important;
+  box-shadow: 0 4px 20px -2px rgba(2, 6, 23, 0.45);
+}
+
+html.dark .octoheft-main {
+  background-color: transparent !important;
+}
+
+/* Deep Ocean Navy Neon Theme Overrides */
+html.neon body,
+html.neon #root,
+html.neon .bg-app {
+  background-color: #00122e !important;
+  background-image: radial-gradient(circle at 80% 10%, rgba(0, 160, 255, 0.14), transparent 45%),
+                    radial-gradient(circle at 15% 85%, rgba(0, 240, 255, 0.08), transparent 45%) !important;
+  color: #e2f1ff !important;
+}
+
+html.neon .bg-card,
+html.neon .card-surface {
+  background-color: rgba(2, 26, 66, 0.85) !important;
+  border-color: rgba(0, 195, 255, 0.25) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 160, 255, 0.12);
+}
+
+html.neon .octoheft-main {
+  background-color: transparent !important;
+}
+
+html.neon .octoheft-subcard {
+  background-color: rgba(1, 22, 58, 0.8) !important;
+  border-color: rgba(0, 195, 255, 0.25) !important;
+}
+
+html.neon .accent-neon {
+  color: #00f0ff !important;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+html.neon input:not([type='range']):not([type='checkbox']):not([type='radio']),
+html.neon select,
+html.neon textarea {
+  background-color: rgba(1, 20, 52, 0.92) !important;
+  border-color: rgba(0, 195, 255, 0.35) !important;
+  color: #e2f1ff !important;
+}
+
+html.neon input:not([type='range']):not([type='checkbox']):not([type='radio'])::placeholder,
+html.neon textarea::placeholder {
+  color: #7dd3fc !important;
+  opacity: 0.72;
+}
+
+html.neon .downloads-table thead th,
+html.neon .octomedia-formats-table thead th,
+html.neon .octomedia-formats-table caption,
+html.neon .octoheft-subcard thead th {
+  background-color: #021a42 !important;
+  border-color: rgba(0, 195, 255, 0.25) !important;
+  color: #7dd3fc !important;
+}
+
+html.neon .downloads-table tbody tr:hover {
+  background-color: rgba(0, 195, 255, 0.08) !important;
+}
+
+html.neon .octomedia-formats-table tbody tr:not(.octomedia-row-selected),
+html.neon .octomedia-formats-table tbody tr:not(.octomedia-row-selected) th {
+  background-color: var(--surface-row) !important;
+}
+
+html.neon .octomedia-formats-table tbody > tr > :is(th, td) {
+  border-color: var(--border-row) !important;
+}
+
+html.neon .octomedia-formats-table tbody tr.octomedia-row-selected,
+html.neon .octomedia-formats-table tbody tr.octomedia-row-selected th {
+  background-color: rgba(0, 195, 255, 0.14) !important;
+}
+
+html.neon .octomedia-formats-table tbody tr:not(.octomedia-row-selected):hover,
+html.neon .octomedia-formats-table tbody tr:not(.octomedia-row-selected):hover th {
+  background-color: rgba(0, 195, 255, 0.06) !important;
+}
+
+/* Legacy WebKit Scrollbar Fallback where standard scrollbar-color is unsupported */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Responsive OctoMedia Formats Table with Sticky Headers & Narrow-Container Card Stacking */
+.octomedia-table-wrapper {
+  overflow: auto;
+  max-inline-size: 100%;
+  max-block-size: min(440px, 54vh);
+  container-type: inline-size;
+}
+
+.octomedia-formats-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.octomedia-formats-table thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+}
+
+.octomedia-formats-table tbody th {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  background: var(--surface-row);
+}
+
+.octomedia-formats-table tbody tr.octomedia-row-selected th {
+  background: var(--surface-row-selected);
+}
+
+@container (max-width: 599px) {
+  .octomedia-formats-table,
+  .octomedia-formats-table thead,
+  .octomedia-formats-table tbody,
+  .octomedia-formats-table tr,
+  .octomedia-formats-table th,
+  .octomedia-formats-table td {
+    display: block;
+  }
+
+  .octomedia-formats-table thead {
+    display: none;
+  }
+
+  .octomedia-formats-table tr {
+    margin-block-end: 0.75rem;
+    border: 1px solid var(--border-card);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: var(--surface-row);
+  }
+
+  .octomedia-formats-table tbody th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background: var(--surface-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .octomedia-formats-table td[data-col='codecs']::before {
+    content: var(--col-codecs, "Codecs") ": ";
+    font-weight: 600;
+    color: var(--text-codec-label);
+  }
+
+  .octomedia-formats-table td[data-col='format']::before {
+    content: var(--col-format, "Format") ": ";
+    font-weight: 600;
+    color: var(--text-codec-label);
+  }
+
+  .octomedia-formats-table td[data-col='size']::before {
+    content: var(--col-size, "Est. Size") ": ";
+    font-weight: 600;
+    color: var(--text-codec-label);
+  }
+}
+
+/* Windows 11 Three-Column Responsive Toolbar & Subgrid Layout */
+.octoheft-header {
+  container-type: inline-size;
+  container-name: header;
+}
+
+.octoheft-header-grid {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.octoheft-header-search {
+  grid-column: 1;
+  grid-row: 1;
+  z-index: 1;
+  min-inline-size: 0;
+  inline-size: 100%;
+  max-inline-size: 18rem;
+}
+
+.octoheft-header-toolbar {
+  grid-column: 1 / -1;
+  grid-row: 1 / 3;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
+  align-items: center;
+  pointer-events: none;
+  min-inline-size: 0;
+}
+
+.octoheft-header-center,
+.octoheft-header-right-wrap {
+  pointer-events: auto;
+  min-inline-size: 0;
+}
+
+.octoheft-header-right-wrap {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.octoheft-header-center {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: center;
+}
+
+.octoheft-toolbar-sep {
+  position: absolute;
+  inset-inline-start: 0;
+  inline-size: 1px;
+  block-size: 1.25rem;
+  border-inline-start: 1px solid var(--toolbar-sep);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.octoheft-toolbar-btn {
+  min-inline-size: 2.25rem;
+  min-block-size: 2.25rem;
+}
+
+.octoheft-toolbar-btn[aria-pressed='true'] {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  box-shadow: inset 0 0 0 1.5px #0284c7, 0 0 10px rgba(2, 132, 199, 0.22);
+}
+
+html.dark .octoheft-toolbar-btn[aria-pressed='true'] {
+  background-color: rgba(8, 51, 68, 0.9);
+  color: #67e8f9;
+  box-shadow: inset 0 0 0 1.5px #22d3ee, 0 0 12px rgba(34, 211, 238, 0.28);
+}
+
+html.neon .octoheft-toolbar-btn[aria-pressed='true'] {
+  background-color: rgba(0, 72, 118, 0.92);
+  color: #00f0ff;
+  box-shadow: inset 0 0 0 1.5px #00f0ff, 0 0 14px rgba(0, 240, 255, 0.45);
+}
+
+.octoheft-toolbar-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .octoheft-toolbar-btn {
+    min-inline-size: 2.5rem;
+    min-block-size: 2.5rem;
+  }
+}
+
+@media (hover: hover) {
+  .octoheft-toolbar-btn:hover {
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: 150ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .octoheft-toolbar-btn {
+    transition: none;
+  }
+}
+
+html.is-file-dragging,
+html.is-file-dragging * {
+  cursor: grabbing !important;
+}
+
+@container header (inline-size >= 920px) {
+  .octoheft-header-grid {
+    grid-template-columns: minmax(10.5rem, 1fr) auto auto;
+    grid-template-rows: auto;
+  }
+
+  .octoheft-header-search {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .octoheft-header-toolbar {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: auto;
+  }
+
+  .octoheft-header-center {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
+    min-inline-size: max-content;
+  }
+
+  .octoheft-header-right-wrap {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    min-inline-size: max-content;
+  }
+
+  .octoheft-toolbar-sep {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  .octoheft-toolbar-sep {
+    border-inline-start-color: ButtonText;
+  }
+
+  .octoheft-toolbar-btn {
+    border: 1px solid ButtonText;
+  }
+
+  .octoheft-toolbar-btn[aria-expanded='true'],
+  .octoheft-toolbar-btn[aria-pressed='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
+
+/* Native Styled Disk Storage Progress Bar */
+.octoheft-disk-progress {
+  appearance: none;
+  display: block;
+  inline-size: 100%;
+  block-size: 0.5rem;
+  border: 0 solid;
+  overflow: clip;
+  container-type: inline-size;
+  --progress-bar-radius: 1e5px;
+  --progress-bar-track: var(--octoheft-progress-track, #e2e8f0);
+  --progress-bar-fill: var(--octoheft-progress-fill, #0284c7);
+  --progress-bar-indeterminate-size: 32%;
+  --progress-bar-indeterminate-animation-duration: 1.5s;
+  border-radius: var(--progress-bar-radius);
+  background: var(--progress-bar-track);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .octoheft-disk-progress {
+    --progress-bar-indeterminate-animation-duration: 10s;
+  }
+}
+
+.octoheft-disk-progress:dir(rtl) {
+  --progress-bar-indeterminate-animation: octoheft-progress-indeterminate
+    var(--progress-bar-indeterminate-animation-duration) infinite linear reverse;
+}
+
+.octoheft-disk-progress:indeterminate {
+  --progress-bar-animation: var(
+    --progress-bar-indeterminate-animation,
+    octoheft-progress-indeterminate var(--progress-bar-indeterminate-animation-duration) infinite linear
+  );
+}
+
+.octoheft-disk-progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+.octoheft-disk-progress::-webkit-progress-value {
+  background: var(--progress-bar-fill);
+  border-radius: var(--progress-bar-radius);
+  transition: inline-size 0.3s ease;
+  animation: var(--progress-bar-animation, revert-rule);
+}
+
+.octoheft-disk-progress::-moz-progress-bar {
+  background: var(--progress-bar-fill);
+  border-radius: var(--progress-bar-radius);
+  transition: inline-size 0.3s ease;
+  animation: var(--progress-bar-animation, revert-rule);
+}
+
+@media (forced-colors: active) {
+  .octoheft-disk-progress {
+    border-width: 1px;
+    border-color: ButtonText;
+    --progress-bar-track: Canvas;
+    --progress-bar-fill: Highlight;
+  }
+}
+
+@keyframes octoheft-progress-indeterminate {
+  from,
+  to {
+    inline-size: var(--progress-bar-indeterminate-size);
+    margin-right: auto;
+  }
+  from {
+    translate: -100%;
+  }
+  to {
+    translate: 100cqi;
+  }
+}
+
+/* Responsive Download Queue Table (Fixed Layout, Single-Line Reveal & Narrow Card Stacking) */
+@property --truncated {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 0;
+}
+
+.downloads-table-wrapper {
+  max-inline-size: 100%;
+  container-type: inline-size;
+  container-name: downloads-table;
+}
+
+.downloads-table {
+  inline-size: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.downloads-col-order {
+  inline-size: 3rem;
+}
+
+.downloads-col-file {
+  inline-size: auto;
+}
+
+.downloads-col-size {
+  inline-size: 5.75rem;
+}
+
+.downloads-col-progress {
+  inline-size: 7.75rem;
+}
+
+.downloads-col-speed {
+  inline-size: 6.5rem;
+}
+
+.downloads-col-eta {
+  inline-size: 3.75rem;
+}
+
+.downloads-col-status {
+  inline-size: 7rem;
+}
+
+.downloads-col-actions {
+  inline-size: 7.75rem;
+}
+
+.downloads-table thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+}
+
+.downloads-table tbody tr:not(:last-child) > td,
+.downloads-table tbody tr:not(:last-child) > th {
+  border-bottom: 1px solid var(--border-row);
+}
+
+.downloads-single-line {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: start;
+  animation: octoheft-truncated linear both;
+  animation-timeline: scroll(self inline);
+}
+
+.downloads-single-line > span {
+  vertical-align: top;
+}
+
+.downloads-single-line:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: 0.25rem;
+}
+
+.downloads-single-line.is-truncated {
+  --truncated: 1;
+}
+
+@keyframes octoheft-truncated {
+  from,
+  to {
+    --truncated: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .downloads-single-line:is(:hover, :focus-visible) {
+    text-overflow: clip;
+  }
+
+  @container style(--truncated: 1) {
+    .downloads-single-line:is(:hover, :focus-visible) > span {
+      display: inline-block;
+      margin-inline-start: 100%;
+      translate: calc(1px - 100%);
+      transition: margin-inline-start 2s ease-in, translate 2s ease-in;
+    }
+
+    .downloads-single-line:is(:hover, :focus-visible):dir(rtl) > span {
+      translate: calc(100% - 1px);
+    }
+  }
+
+  .downloads-single-line.is-truncated:is(:hover, :focus-visible) > span {
+    display: inline-block;
+    margin-inline-start: 100%;
+    translate: calc(1px - 100%);
+    transition: margin-inline-start 2s ease-in, translate 2s ease-in;
+  }
+
+  .downloads-single-line.is-truncated:is(:hover, :focus-visible):dir(rtl) > span {
+    translate: calc(100% - 1px);
+  }
+}
+
+@container downloads-table (inline-size < 780px) {
+  .downloads-table {
+    display: block;
+  }
+
+  .downloads-table colgroup {
+    display: none;
+  }
+
+  .downloads-table thead {
+    display: none;
+  }
+
+  .downloads-table tbody {
+    display: block;
+    padding: 0.625rem;
+  }
+
+  .downloads-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    margin-block-end: 0.625rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 0.75rem;
+    background: var(--surface-row);
+  }
+
+  .downloads-table tbody tr:last-child {
+    margin-block-end: 0;
+  }
+
+  .downloads-table tbody tr > td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    inline-size: 100%;
+    padding: 0.45rem 0.75rem;
+    text-align: end;
+    border-bottom: 1px solid var(--border-row);
+  }
+
+  .downloads-table tbody tr > th.downloads-cell-file {
+    order: -1;
+    display: block;
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    inline-size: 100%;
+    background: var(--surface-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    border-start-start-radius: 0.75rem;
+    border-start-end-radius: 0.75rem;
+    text-align: start;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .downloads-table tbody tr > td:last-child {
+    border-bottom: 0;
+  }
+
+  .downloads-table tbody td[data-col='order']::before {
+    content: var(--col-order, 'Order') ': ';
+    font-weight: 600;
+    color: var(--text-col-label);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .downloads-table tbody td[data-col='size']::before {
+    content: var(--col-size, 'Size') ': ';
+    font-weight: 600;
+    color: var(--text-col-label);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .downloads-table tbody td[data-col='progress']::before {
+    content: var(--col-progress, 'Progress') ': ';
+    font-weight: 600;
+    color: var(--text-col-label);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .downloads-table tbody td[data-col='speed']::before {
+    content: var(--col-speed, 'Speed') ': ';
+    font-weight: 600;
+    color: var(--text-col-label);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .downloads-table tbody td[data-col='eta']::before {
+    content: var(--col-eta, 'ETA') ': ';
+    font-weight: 600;
+    color: var(--text-col-label);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .downloads-table tbody td[data-col='status']::before {
+    content: var(--col-status, 'Status') ': ';
+    font-weight: 600;
+    color: var(--text-col-label);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .downloads-table tbody td[data-col='actions']::before {
+    content: var(--col-actions, 'Actions') ': ';
+    font-weight: 600;
+    color: var(--text-col-label);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .downloads-table tbody td[data-col='progress'] > .downloads-progress-inner {
+    min-inline-size: 9rem;
+    flex: 0 1 13rem;
+  }
+}

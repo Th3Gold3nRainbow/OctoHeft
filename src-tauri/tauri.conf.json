@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OctoHeft",
+  "mainBinaryName": "OctoHeft",
+  "version": "0.1.0",
+  "identifier": "com.antigravity.octoheft",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "OctoHeft - Modern Download Accelerator",
+        "width": 1200,
+        "height": 720,
+        "minWidth": 850,
+        "minHeight": 580,
+        "center": true,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "OctoHeft Software",
+    "copyright": "Copyright (C) 2026 OctoHeft",
+    "shortDescription": "OctoHeft High-Speed Download Accelerator",
+    "longDescription": "High-Speed Parallel Download Accelerator with sparse file direct I/O and Native Messaging interception.",
+    "resources": {
+      "../native_messaging/extension": "resources/extension"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "octodl"
+        ],
+        "name": "OctoHeft Queue File",
+        "description": "OctoHeft Download Task Bundle",
+        "mimeType": "application/vnd.octoheft.queue"
+      }
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "compression": "lzma",
+        "template": "nsis/installer.nsi",
+        "installerHooks": "nsis/hooks.nsh",
+        "languages": [
+          "English",
+          "French",
+          "Spanish",
+          "German",
+          "Arabic",
+          "Russian",
+          "SimpChinese"
+        ],
+        "displayLanguageSelector": false
+      }
+    }
+  }
+}

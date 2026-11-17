@@ -1,0 +1,10 @@
+{
+  "name": "com.antigravity.octoheft",
+  "description": "OctoHeft Modern Download Accelerator Native Messaging Host",
+  "path": "OctoHeft.exe",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://kalfiofhhhcdnnkjehidagebfikodflp/"
+  ]
+}
+

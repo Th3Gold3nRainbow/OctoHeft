@@ -1,0 +1,50 @@
+# Rust build artifacts
+target/
+**/target/
+src-tauri/target/
+*.pdb
+*.exe
+!resources/**/*.exe
+
+# Node.js artifacts & bundles
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Tauri build & gen artifacts
+src-tauri/gen/
+**/*.rs.bk
+
+# Python cache artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local test / portable run data
+portable.flag
+data/
+logs/

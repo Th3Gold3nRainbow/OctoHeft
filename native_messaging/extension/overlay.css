@@ -1,0 +1,86 @@
+/* OctoHeft Floating Video Button — Windows 11 Fluent Light + Sky Blue */
+.octoheft-video-overlay-btn {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 6px 12px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+  color: #0369a1 !important;
+  border: 1px solid rgba(2, 132, 199, 0.35) !important;
+  border-radius: 9px !important;
+  font-family: "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  cursor: pointer !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.16), 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.15s ease,
+    border-color 0.15s ease !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+*:hover > .octoheft-video-overlay-btn,
+.octoheft-video-overlay-btn.octoheft-visible,
+.octoheft-video-overlay-btn.octoheft-hover-lock,
+.octoheft-video-overlay-btn:hover {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.octoheft-video-overlay-btn.octoheft-hover-lock,
+.octoheft-video-overlay-btn:hover {
+  transform: translateY(-1px) !important;
+  background: #ffffff !important;
+  color: #0284c7 !important;
+  border-color: rgba(14, 165, 233, 0.75) !important;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.24) !important;
+}
+
+.octoheft-video-overlay-btn svg {
+  stroke: #0284c7 !important;
+  flex-shrink: 0 !important;
+}
+
+.octoheft-video-overlay-btn.octoheft-sending {
+  background: rgba(241, 245, 249, 0.96) !important;
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.octoheft-video-overlay-btn.octoheft-success {
+  background: rgba(236, 253, 245, 0.96) !important;
+  color: #047857 !important;
+  border-color: #10b981 !important;
+}
+
+.octoheft-video-overlay-btn.octoheft-success svg {
+  stroke: #059669 !important;
+}
+
+.octoheft-video-overlay-btn.octoheft-error {
+  background: rgba(255, 241, 242, 0.96) !important;
+  color: #be123c !important;
+  border-color: #f43f5e !important;
+}
+
+.octoheft-video-overlay-btn.octoheft-error svg {
+  stroke: #e11d48 !important;
+}
