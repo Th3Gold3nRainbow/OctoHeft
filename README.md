@@ -2,6 +2,10 @@
 
 # OctoHeft
 
+<p align="center">
+  <img src="assets/logo.png" alt="OctoHeft Logo" width="100" />
+</p>
+
 ### *High-Speed, Zero-Assembly Parallel Download Accelerator for Windows*
 
 [![Rust 2021](https://img.shields.io/badge/Rust-2021_Edition-dea584?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
