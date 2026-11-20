@@ -45,6 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     sound_on_complete: true,
     default_download_dir: '',
     use_category_subfolders: true,
+    max_connections_per_download: 8,
   });
   const [browserReport, setBrowserReport] = useState<BrowserIntegrationReport | null>(null);
   const [browserActionMessage, setBrowserActionMessage] = useState<string | null>(null);
@@ -255,6 +256,73 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   ))}
                 </select>
                 <p className="text-[11px] text-slate-600 dark:text-slate-300">{t('settings.languageHelp')}</p>
+              </div>
+
+              {/* Parallel Connections Setting */}
+              <div className="octoheft-subcard p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="settings-connections-slider"
+                    className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2"
+                  >
+                    <Sliders className="h-4 w-4 text-sky-600 dark:text-cyan-400" />
+                    <span>{t('settings.connectionsLabel')}</span>
+                  </label>
+                  <span className="accent-neon text-xs font-mono font-bold text-sky-700 dark:text-cyan-300">
+                    {t('settings.connectionsCount', { count: draft.max_connections_per_download || 8 })}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                  {t('settings.connectionsDesc')}
+                </p>
+
+                {/* Segmented Quick Preset Buttons */}
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[1, 2, 4, 8, 16].map((num) => {
+                    const isSelected = (draft.max_connections_per_download || 8) === num;
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() =>
+                          setDraft((prev) => ({ ...prev, max_connections_per_download: num }))
+                        }
+                        className={`py-1.5 px-2 rounded-lg font-mono text-xs font-medium transition-all ${
+                          isSelected
+                            ? 'bg-sky-600 dark:bg-cyan-500 text-white shadow-sm ring-2 ring-sky-500/30'
+                            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Range Slider for granular selection from 1 to 16 */}
+                <input
+                  id="settings-connections-slider"
+                  type="range"
+                  min="1"
+                  max="16"
+                  step="1"
+                  value={draft.max_connections_per_download || 8}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) {
+                      setDraft((prev) => ({
+                        ...prev,
+                        max_connections_per_download: Math.min(16, Math.max(1, val)),
+                      }));
+                    }
+                  }}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600 dark:accent-cyan-400"
+                />
+                <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                  <span>{t('settings.connectionsSingle')}</span>
+                  <span>{t('settings.connectionsDefault')}</span>
+                  <span>{t('settings.connectionsMax')}</span>
+                </div>
               </div>
 
               {/* Completion Sound Setting */}

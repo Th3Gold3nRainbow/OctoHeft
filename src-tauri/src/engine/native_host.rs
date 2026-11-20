@@ -1332,7 +1332,7 @@ async fn handle_live_pipe_request(
         url: primary_url.clone(),
         save_path: None,
         file_name: sanitized_file_name,
-        connections: Some(8),
+        connections: None,
         headers: headers.clone(),
     };
 

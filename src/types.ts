@@ -292,6 +292,7 @@ export interface AppSettings {
   default_download_dir: string;
   use_category_subfolders: boolean;
   clipboard_monitor_enabled?: boolean;
+  max_connections_per_download?: number;
 }
 
 export interface ClipboardUrlDetectedPayload {

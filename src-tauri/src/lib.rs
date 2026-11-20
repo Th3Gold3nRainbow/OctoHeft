@@ -65,6 +65,7 @@ pub fn run() {
         effective_downloads_dir,
         category_dispatcher.clone(),
     ));
+    engine.set_default_connections(initial_settings.max_connections_per_download as usize);
     let scheduler = Arc::new(QueueScheduler::new(&storage_dir));
     let proxy_auth = Arc::new(ProxyAuthManager::new(&storage_dir));
     let pending_grab = Arc::new(engine::omniget::PendingVideoGrab::default());
@@ -81,6 +82,13 @@ pub fn run() {
     let initial_lang_for_tray = initial_settings.language.clone();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
+                let _ = w.show();
+                let _ = w.set_focus();
+            }
+        }))
         .manage(runtime_paths)
         .manage(engine)
         .manage(scheduler)

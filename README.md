@@ -182,6 +182,8 @@ A lock-free token bucket rate limiter enables global and per-download speed thro
 
 ### 4. Background Tray & Windows Shell Integration
 - **System Tray Minimization**: Runs silently in the Windows system notification area, minimizing on close.
+- **Single-Instance Enforcement**: Runs a single application process to conserve memory and handle IPC cleanly; subsequent launch attempts unminimize and focus the active window instantly.
+- **Configurable Parallel Connections**: Default download chunk parallelism (1 to 16 streams, default: 8) can be customized directly in Settings (`General` tab) via preset buttons or a slider, applying to new downloads, batch queues, and browser extensions with automatic single-stream fallback when remote servers lack HTTP 206 Range support.
 - **Custom URI Scheme**: Registers `octoheft://download?url=...` in `HKCU\Software\Classes\octoheft`.
 - **Explorer Shell Context Menu**: Integrates "Verify checksum with OctoHeft" in Windows Explorer context menus.
 - **Global Hotkey (`Ctrl+Alt+D`)**: Intercepts the clipboard and opens the `Add Download` dialog with any copied URL.
@@ -194,7 +196,7 @@ A lock-free token bucket rate limiter enables global and per-download speed thro
 
 1. Navigate to the [Releases](https://github.com/Twix/OctoHeft/releases) page.
 2. Select your preferred distribution:
-   - **NSIS Setup Installer** (`OctoHeft_0.1.0_x64-setup.exe`): Full multi-language setup wizard, auto-registers native messaging manifests, URI schemes, and shell context menus.
+   - **NSIS Setup Installer** (`OctoHeft_0.1.1_x64-setup.exe`): Full multi-language setup wizard, auto-registers native messaging manifests, URI schemes, and shell context menus.
    - **Portable Standalone Executable** (`OctoHeft.exe`): Single executable footprint (< 5 MiB). Place `portable.flag` or a `./data` directory alongside the binary to store all settings and logs locally.
 
 ### Option B: Browser Extension Setup (Chrome / Edge / Brave)
@@ -240,7 +242,7 @@ cargo test
 npm run tauri build
 ```
 - **Portable Binary**: `src-tauri/target/release/OctoHeft.exe`
-- **NSIS Windows Installer**: `src-tauri/target/release/bundle/nsis/OctoHeft_0.1.0_x64-setup.exe`
+- **NSIS Windows Installer**: `src-tauri/target/release/bundle/nsis/OctoHeft_0.1.1_x64-setup.exe`
 
 ---
 

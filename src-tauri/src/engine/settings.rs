@@ -33,6 +33,10 @@ pub fn default_download_dir_string() -> String {
         .to_string()
 }
 
+fn default_chunks() -> u32 {
+    8
+}
+
 fn detect_initial_language() -> String {
     if let Some(reg_lang) = read_registry_language() {
         return reg_lang;
@@ -54,6 +58,8 @@ pub struct AppSettings {
     pub use_category_subfolders: bool,
     #[serde(default)]
     pub clipboard_monitor_enabled: bool,
+    #[serde(default = "default_chunks", alias = "parallel_connections", alias = "chunks_per_download")]
+    pub max_connections_per_download: u32,
 }
 
 impl Default for AppSettings {
@@ -65,6 +71,7 @@ impl Default for AppSettings {
             default_download_dir: default_download_dir_string(),
             use_category_subfolders: true,
             clipboard_monitor_enabled: false,
+            max_connections_per_download: 8,
         }
     }
 }
@@ -212,6 +219,12 @@ impl SettingsStore {
             normalized_exts = DEFAULT_INTERCEPT_EXTENSIONS.to_string();
         }
 
+        let connections = if settings.max_connections_per_download == 0 {
+            8
+        } else {
+            settings.max_connections_per_download.clamp(1, 16)
+        };
+
         AppSettings {
             language: normalize_language_code(&settings.language),
             intercept_extensions: normalized_exts,
@@ -219,6 +232,7 @@ impl SettingsStore {
             default_download_dir: default_dir,
             use_category_subfolders: settings.use_category_subfolders,
             clipboard_monitor_enabled: settings.clipboard_monitor_enabled,
+            max_connections_per_download: connections,
         }
     }
 
@@ -266,6 +280,7 @@ impl SettingsStore {
             default_download_dir: default_download_dir_string(),
             use_category_subfolders: true,
             clipboard_monitor_enabled: false,
+            max_connections_per_download: 8,
         };
         let _ = self.save(&detected);
         detected
@@ -336,6 +351,7 @@ mod tests {
         assert!(initial.sound_on_complete);
         assert!(initial.use_category_subfolders);
         assert!(!initial.default_download_dir.is_empty());
+        assert_eq!(initial.max_connections_per_download, 8);
 
         let saved = store
             .save(&AppSettings {
@@ -345,6 +361,7 @@ mod tests {
                 default_download_dir: dir.to_string_lossy().to_string(),
                 use_category_subfolders: false,
                 clipboard_monitor_enabled: true,
+                max_connections_per_download: 12,
             })
             .expect("save failed");
         assert_eq!(saved.language, "ar");
@@ -352,6 +369,7 @@ mod tests {
         assert!(!saved.sound_on_complete);
         assert!(!saved.use_category_subfolders);
         assert!(saved.clipboard_monitor_enabled);
+        assert_eq!(saved.max_connections_per_download, 12);
 
         let reloaded = store.load_or_init_with_registry_override(None);
         assert_eq!(reloaded.language, "ar");
@@ -359,6 +377,7 @@ mod tests {
         assert!(!reloaded.sound_on_complete);
         assert!(!reloaded.use_category_subfolders);
         assert!(reloaded.clipboard_monitor_enabled);
+        assert_eq!(reloaded.max_connections_per_download, 12);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

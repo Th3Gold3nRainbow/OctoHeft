@@ -17,6 +17,7 @@ interface AddDownloadModalProps {
   initialUrl?: string;
   initialFileName?: string;
   defaultDownloadDir?: string;
+  defaultConnections?: number;
   capturedFromClipboard?: boolean;
   isMediaUrl?: boolean;
   onClose: () => void;
@@ -31,6 +32,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   initialUrl,
   initialFileName,
   defaultDownloadDir,
+  defaultConnections = 8,
   capturedFromClipboard = false,
   isMediaUrl = false,
   onClose,
@@ -42,7 +44,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const { t } = useI18n();
   const [url, setUrl] = useState('');
   const [fileName, setFileName] = useState('');
-  const [connections, setConnections] = useState(8);
+  const [connections, setConnections] = useState(defaultConnections);
   const [startImmediately, setStartImmediately] = useState(true);
 
   useEffect(() => {
@@ -53,11 +55,12 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       if (initialFileName !== undefined) {
         setFileName(initialFileName);
       }
+      setConnections(defaultConnections);
     } else {
       setUrl('');
       setFileName('');
     }
-  }, [isOpen, initialUrl, initialFileName]);
+  }, [isOpen, initialUrl, initialFileName, defaultConnections]);
 
   useEffect(() => {
     if (!isOpen) return;

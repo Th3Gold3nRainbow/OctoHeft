@@ -195,7 +195,7 @@ pub async fn add_batch_downloads(
             url,
             save_path: None,
             file_name: None,
-            connections: Some(8),
+            connections: None,
             headers: None,
         };
 
@@ -641,9 +641,11 @@ pub fn save_app_settings(
     settings_store: State<SharedSettingsStore>,
     dispatcher: State<SharedCategoryDispatcher>,
     monitor: State<SharedClipboardMonitor>,
+    engine: State<SharedEngine>,
     app: AppHandle,
 ) -> Result<AppSettings, String> {
     let saved = settings_store.save(&settings)?;
+    engine.set_default_connections(saved.max_connections_per_download as usize);
     write_registry_language(&saved.language);
     crate::tray::update_tray_language(&app, &saved.language);
     dispatcher.apply_folder_settings(

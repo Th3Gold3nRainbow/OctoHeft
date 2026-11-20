@@ -15,7 +15,7 @@ use chrono::Utc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicU8, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
@@ -35,7 +35,7 @@ pub struct DownloadEngine {
     pub category_dispatcher: Arc<CategoryDispatcher>,
     active_controls: RwLock<HashMap<String, ActiveTaskControl>>,
     pub global_speed_limiter: SpeedLimiter,
-    default_connections: usize,
+    default_connections: AtomicUsize,
     default_download_dir: PathBuf,
 }
 
@@ -61,13 +61,22 @@ impl DownloadEngine {
             category_dispatcher,
             active_controls: RwLock::new(HashMap::new()),
             global_speed_limiter,
-            default_connections: 8,
+            default_connections: AtomicUsize::new(8),
             default_download_dir,
         }
     }
 
     pub fn client(&self) -> &reqwest::Client {
         &self.client
+    }
+
+    pub fn default_connections(&self) -> usize {
+        self.default_connections.load(Ordering::Relaxed)
+    }
+
+    pub fn set_default_connections(&self, conns: usize) {
+        let clamped = conns.clamp(1, 16);
+        self.default_connections.store(clamped, Ordering::Relaxed);
     }
 
     /// Add a new download task and probe remote server headers
@@ -97,7 +106,10 @@ impl DownloadEngine {
                 .to_string()
         };
 
-        let connections = req.connections.unwrap_or(self.default_connections);
+        let connections = req
+            .connections
+            .map(|c| c.clamp(1, 16))
+            .unwrap_or_else(|| self.default_connections());
         let category = self.category_dispatcher.classify(&file_name, None);
 
         // Determine save path using Automatic Category Dispatcher unless explicitly provided

@@ -61,6 +61,7 @@ export const App: React.FC = () => {
     sound_on_complete: true,
     default_download_dir: '',
     use_category_subfolders: true,
+    max_connections_per_download: 8,
   });
   const [currentCategory, setCurrentCategory] = useState<DownloadCategory>('all');
   const [currentStatus, setCurrentStatus] = useState<string>('all');
@@ -826,6 +827,7 @@ export const App: React.FC = () => {
         initialUrl={prefillUrl}
         initialFileName={prefillFileName}
         defaultDownloadDir={appSettings.default_download_dir}
+        defaultConnections={appSettings.max_connections_per_download || 8}
         capturedFromClipboard={prefillFromClipboard}
         isMediaUrl={prefillIsMedia}
         onClose={() => {
