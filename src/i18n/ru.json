@@ -356,6 +356,25 @@
   "videoAddon.viewDetailsBtn": "Подробнее",
   "videoAddon.openFolderBtn": "Открыть папку",
   "videoAddon.emptyTitle": "Готов к извлечению 4K / HD медиа",
-  "videoAddon.emptyDesc": "Вставьте ссылку на видео выше или нажмите плавающую кнопку на YouTube в браузере."
+  "videoAddon.emptyDesc": "Вставьте ссылку на видео выше или нажмите плавающую кнопку на YouTube в браузере.",
+
+  "update.badgeText": "Обновить до {{version}}",
+  "update.updateAvailableTitle": "Доступна новая версия {{version}}",
+  "update.modalTitle": "Обновление программы",
+  "update.modalSubtitle": "Доступна новая версия OctoHeft с улучшениями и исправлениями.",
+  "update.currentVersion": "Текущая версия",
+  "update.latestVersion": "Новая версия",
+  "update.releaseNotes": "Список изменений",
+  "update.downloadAndInstall": "Обновить до {{version}}",
+  "update.downloading": "Загрузка обновления... ({{percent}}%)",
+  "update.readyPrompt": "Обновление готово. OctoHeft закроется и запустит программу установки.",
+  "update.launching": "Запуск установщика...",
+  "update.cancel": "Напомнить позже",
+  "update.error": "Ошибка обновления: {{error}}",
+  "update.retry": "Повторить",
+  "update.viewOnGitHub": "Открыть на GitHub",
+  "update.checkUpdates": "Проверить обновления",
+  "update.checking": "Проверка обновлений...",
+  "update.upToDate": "Установлена актуальная версия (v{{version}})"
 }
 

@@ -992,6 +992,23 @@ pub fn get_disk_space_stats(
     query_disk_space_stats(&resolved_path)
 }
 
+// --- In-App Updates ---
+
+#[tauri::command]
+pub async fn check_app_update() -> Result<crate::engine::updater::UpdateInfo, String> {
+    crate::engine::updater::check_update(false).await
+}
+
+#[tauri::command]
+pub async fn install_app_update(download_url: String, app: AppHandle) -> Result<(), String> {
+    crate::engine::updater::install_update(download_url, app).await
+}
+
+#[tauri::command]
+pub fn launch_app_update(app: AppHandle) -> Result<(), String> {
+    crate::engine::updater::launch_update(app)
+}
+
 #[cfg(test)]
 mod disk_stats_tests {
     use super::*;

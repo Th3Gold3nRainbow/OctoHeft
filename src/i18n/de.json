@@ -356,6 +356,25 @@
   "videoAddon.viewDetailsBtn": "Details ansehen",
   "videoAddon.openFolderBtn": "Ordner öffnen",
   "videoAddon.emptyTitle": "Bereit für 4K- / HD-Medienextraktion",
-  "videoAddon.emptyDesc": "Fügen Sie oben einen Videolink ein oder klicken Sie im Browser auf den schwebenden YouTube-Button."
+  "videoAddon.emptyDesc": "Fügen Sie oben einen Videolink ein oder klicken Sie im Browser auf den schwebenden YouTube-Button.",
+
+  "update.badgeText": "Update auf {{version}}",
+  "update.updateAvailableTitle": "Neue Version {{version}} verfügbar",
+  "update.modalTitle": "Software-Update",
+  "update.modalSubtitle": "Eine neue Version von OctoHeft mit Verbesserungen ist verfügbar.",
+  "update.currentVersion": "Aktuelle Version",
+  "update.latestVersion": "Neue Version",
+  "update.releaseNotes": "Versionshinweise",
+  "update.downloadAndInstall": "Auf {{version}} aktualisieren",
+  "update.downloading": "Update wird heruntergeladen... ({{percent}}%)",
+  "update.readyPrompt": "Das Update ist bereit. OctoHeft wird geschlossen und das Installationsprogramm gestartet.",
+  "update.launching": "Installationsprogramm wird gestartet...",
+  "update.cancel": "Später erinnern",
+  "update.error": "Update fehlgeschlagen: {{error}}",
+  "update.retry": "Wiederholen",
+  "update.viewOnGitHub": "Auf GitHub ansehen",
+  "update.checkUpdates": "Nach Updates suchen",
+  "update.checking": "Suche nach Updates...",
+  "update.upToDate": "OctoHeft ist auf dem neuesten Stand (v{{version}})"
 }
 

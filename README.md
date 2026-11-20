@@ -196,7 +196,7 @@ A lock-free token bucket rate limiter enables global and per-download speed thro
 
 1. Navigate to the [Releases](https://github.com/Twix/OctoHeft/releases) page.
 2. Select your preferred distribution:
-   - **NSIS Setup Installer** (`OctoHeft_0.1.1_x64-setup.exe`): Full multi-language setup wizard, auto-registers native messaging manifests, URI schemes, and shell context menus.
+   - **NSIS Setup Installer** (`OctoHeft_2.0.0_x64-setup.exe`): Full multi-language setup wizard, auto-registers native messaging manifests, URI schemes, and shell context menus.
    - **Portable Standalone Executable** (`OctoHeft.exe`): Single executable footprint (< 5 MiB). Place `portable.flag` or a `./data` directory alongside the binary to store all settings and logs locally.
 
 ### Option B: Browser Extension Setup (Chrome / Edge / Brave)
@@ -242,7 +242,7 @@ cargo test
 npm run tauri build
 ```
 - **Portable Binary**: `src-tauri/target/release/OctoHeft.exe`
-- **NSIS Windows Installer**: `src-tauri/target/release/bundle/nsis/OctoHeft_0.1.1_x64-setup.exe`
+- **NSIS Windows Installer**: `src-tauri/target/release/bundle/nsis/OctoHeft_2.0.0_x64-setup.exe`
 
 ---
 

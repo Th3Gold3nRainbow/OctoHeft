@@ -19,6 +19,7 @@ pub mod clipboard_monitor;
 pub mod drag_drop;
 pub mod telemetry;
 pub mod download_engine;
+pub mod updater;
 
 pub use clipboard_monitor::{ClipboardMonitor, ClipboardUrlDetectedPayload};
 

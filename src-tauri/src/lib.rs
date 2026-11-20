@@ -190,6 +190,9 @@ pub fn run() {
             commands::omniget_start_download,
             commands::take_pending_video_grab,
             commands::get_disk_space_stats,
+            commands::check_app_update,
+            commands::install_app_update,
+            commands::launch_app_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running octoheft application");

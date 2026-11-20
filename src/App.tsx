@@ -11,6 +11,7 @@ import {
   QueueConfig,
   BrowserIntegrationReport,
   VideoGrabberPayload,
+  UpdateInfo,
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -23,6 +24,7 @@ import { SchedulerModal } from './components/SchedulerModal';
 import { ZipPreviewModal } from './components/ZipPreviewModal';
 import { SettingsModal } from './components/SettingsModal';
 import { BrowserIntegrationModal } from './components/BrowserIntegrationModal';
+import { UpdateModal } from './components/UpdateModal';
 
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -89,6 +91,8 @@ export const App: React.FC = () => {
   const [autoCloseOnFinish, setAutoCloseOnFinish] = useState<boolean>(false);
   const [diskStats, setDiskStats] = useState<DiskSpaceStats | null>(null);
   const [sessionDownloadedBytes, setSessionDownloadedBytes] = useState<number>(0);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const initialTasksLoadedRef = useRef(false);
   const grabSeqRef = useRef(0);
@@ -228,6 +232,19 @@ export const App: React.FC = () => {
         }
       })
       .catch(console.error);
+
+    const checkForUpdates = () => {
+      invoke<UpdateInfo>('check_app_update')
+        .then((info) => {
+          if (active && info) {
+            setUpdateInfo(info);
+          }
+        })
+        .catch(() => {});
+    };
+
+    checkForUpdates();
+    const updateInterval = setInterval(checkForUpdates, 30 * 60 * 1000);
 
     let unlistenProgress: (() => void) | null = null;
     let unlistenHotkey: (() => void) | null = null;
@@ -397,6 +414,7 @@ export const App: React.FC = () => {
 
     return () => {
       active = false;
+      clearInterval(updateInterval);
       if (unlistenProgress) unlistenProgress();
       if (unlistenHotkey) unlistenHotkey();
       if (unlistenNativeTask) unlistenNativeTask();
@@ -749,6 +767,8 @@ export const App: React.FC = () => {
           onCycleTheme={cycleTheme}
           clipboardMonitorActive={clipboardMonitorActive}
           onClipboardMonitorChanged={handleClipboardMonitorChanged}
+          updateInfo={updateInfo}
+          onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
           onOpenAddModal={() => {
             setPrefillUrl('');
             setPrefillFileName('');
@@ -904,6 +924,13 @@ export const App: React.FC = () => {
       <BrowserIntegrationModal
         isOpen={isBrowserModalOpen}
         onClose={() => setIsBrowserModalOpen(false)}
+      />
+
+      {/* Software Update Notification & Auto-Installer Modal */}
+      <UpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        updateInfo={updateInfo}
       />
 
       {/* Standalone IDM-Style Download Progress Dialog */}

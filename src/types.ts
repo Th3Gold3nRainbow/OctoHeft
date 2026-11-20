@@ -301,6 +301,22 @@ export interface ClipboardUrlDetectedPayload {
   is_media: boolean;
 }
 
+export interface UpdateInfo {
+  available: boolean;
+  current_version: string;
+  latest_version: string;
+  release_notes?: string | null;
+  download_url?: string | null;
+}
+
+export interface UpdateProgressPayload {
+  downloaded_bytes: number;
+  total_bytes?: number | null;
+  percent: number;
+  status: 'downloading' | 'ready' | 'error';
+  error_message?: string | null;
+}
+
 export interface DiskSpaceStats {
   drive_label: string;
   target_path: string;

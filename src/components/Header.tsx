@@ -16,11 +16,13 @@ import {
   Zap,
   Clipboard,
   ClipboardCheck,
+  Sparkles,
 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { formatSpeed } from '../utils';
 import { useI18n } from '../i18n';
 import { useTheme, ThemeMode } from '../hooks/useTheme';
+import { UpdateInfo } from '../types';
 
 interface HeaderProps {
   totalSpeed: number;
@@ -30,6 +32,8 @@ interface HeaderProps {
   clipboardMonitorActive?: boolean;
   onToggleClipboardMonitor?: () => void;
   onClipboardMonitorChanged?: (active: boolean) => void;
+  updateInfo?: UpdateInfo | null;
+  onOpenUpdateModal?: () => void;
   onOpenAddModal: () => void;
   onOpenBatchModal: () => void;
   onOpenSchedulerModal: () => void;
@@ -53,6 +57,8 @@ export const Header: React.FC<HeaderProps> = ({
   clipboardMonitorActive: propClipboardActive,
   onToggleClipboardMonitor,
   onClipboardMonitorChanged,
+  updateInfo,
+  onOpenUpdateModal,
   onOpenAddModal,
   onOpenBatchModal,
   onOpenSchedulerModal,
@@ -369,7 +375,26 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Right Zone: Separator + Cohesive Frosted Utility Pill */}
-          <div className="octoheft-header-right-wrap">
+          <div className="octoheft-header-right-wrap flex items-center gap-1.5">
+            {updateInfo?.available && onOpenUpdateModal && (
+              <button
+                type="button"
+                onClick={onOpenUpdateModal}
+                title={t('update.updateAvailableTitle', { version: updateInfo.latest_version })}
+                aria-label={t('update.updateAvailableTitle', { version: updateInfo.latest_version })}
+                className="octoheft-toolbar-btn group relative inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-gradient-to-r from-sky-500/20 via-cyan-500/25 to-sky-500/20 dark:from-sky-500/30 dark:via-cyan-400/35 dark:to-sky-500/30 border border-sky-400/50 dark:border-cyan-400/60 text-sky-700 dark:text-cyan-300 font-semibold text-xs shadow-[0_0_12px_rgba(14,165,233,0.35)] hover:shadow-[0_0_20px_rgba(14,165,233,0.6)] transition-all animate-pulse focus-visible:relative focus-visible:z-10 shrink-0"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-sky-600 dark:text-cyan-400 shrink-0" aria-hidden="true" />
+                <span className="whitespace-nowrap font-medium">
+                  {t('update.badgeText', { version: `v${updateInfo.latest_version}` })}
+                </span>
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+                </span>
+              </button>
+            )}
+
             <span role="separator" aria-orientation="vertical" className="octoheft-toolbar-sep" />
 
             <div
