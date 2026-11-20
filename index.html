@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="assets/favicon.png?v=1">
-<title>OctoHeft – Download accelerator for Windows</title>
+<title>OctoHeft â€“ Download accelerator for Windows</title>
 <meta name="description" content="OctoHeft: a parallel download accelerator for Windows, built in Rust. Zero assembly, under 5 MB, open source. The modern alternative to IDM.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -128,7 +128,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <li><a href="#idm">IDM comparison</a></li>
     <li><a href="#browser">Browser</a></li>
   </ul>
-  <a class="btn primary" href="https://github.com/Th3Gold3nRainbow/OctoHeft/releases/download/v0.1.0/OctoHeft_0.1.0_x64-setup.exe">Download</a>
+  <a class="btn primary" href="https://github.com/Th3Gold3nRainbow/OctoHeft/releases/download/v0.1.1/OctoHeft_0.1.1_x64-setup.exe">Download</a>
 </div></nav>
 
 <header class="hero" id="top"><div class="wrap grid">
@@ -136,7 +136,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <h1>Your download ends when the file is done. Not after.</h1>
     <p class="lead">OctoHeft speeds up downloads on Windows by writing each chunk straight to its place in the final file. No more waiting at 99%, one executable under 5 MB, no kernel drivers.</p>
     <div class="cta">
-      <a class="btn primary" href="https://github.com/Th3Gold3nRainbow/OctoHeft/releases/download/v0.1.0/OctoHeft_0.1.0_x64-setup.exe">Download for Windows</a>
+      <a class="btn primary" href="https://github.com/Th3Gold3nRainbow/OctoHeft/releases/download/v0.1.1/OctoHeft_0.1.1_x64-setup.exe">Download for Windows</a>
       <a class="btn ghost" href="https://github.com/Th3Gold3nRainbow/OctoHeft">View the source</a>
     </div>
     <div class="badges"><span>Rust</span><span>Tauri v2</span><span>React 18</span><span>MIT license</span><span>Windows 10 / 11</span></div>
@@ -146,7 +146,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <h3>Same file, same connection (simulation)</h3>
     <div class="lane"><div class="top"><span>OctoHeft</span><em id="to">0%</em></div><div class="track"><div class="fill" id="fo"></div></div></div>
     <div class="lane"><div class="top"><span>Classic download manager (IDM)</span><em id="ti">0%</em></div><div class="track"><div class="fill" id="fi"></div></div></div>
-    <p class="note" id="rn">Both download at the same speed…</p>
+    <p class="note" id="rn">Both download at the same speedâ€¦</p>
   </div>
 </div></header>
 
@@ -161,7 +161,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
         <div class="warn">99% barrier: every part is read and copied again</div>
         <div>Final file only created at the very end</div>
       </div>
-      <ul><li>30 seconds to 5+ minutes of waiting on large files</li><li>Data written twice to the SSD</li><li>Free space needed: 2 × the file size</li></ul>
+      <ul><li>30 seconds to 5+ minutes of waiting on large files</li><li>Data written twice to the SSD</li><li>Free space needed: 2 Ã— the file size</li></ul>
     </div>
     <div class="pane good">
       <h3>OctoHeft pipeline</h3><div class="tag">Direct writes, zero assembly</div>
@@ -170,14 +170,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
         <div>Each connection writes at its exact offset</div>
         <div>Done the instant the last packet arrives</div>
       </div>
-      <ul><li>0 ms of assembly</li><li>A single write pass on disk</li><li>Free space needed: 1 × the file size</li></ul>
+      <ul><li>0 ms of assembly</li><li>A single write pass on disk</li><li>Free space needed: 1 Ã— the file size</li></ul>
     </div>
   </div>
 </div></section>
 
 <section id="features" style="background:var(--surface);border-block:1px solid var(--line)"><div class="wrap">
   <h2>Everything you need in one executable</h2>
-  <p class="lead">Browse through the app’s modules.</p>
+  <p class="lead">Browse through the appâ€™s modules.</p>
   <div class="tabs" role="tablist" id="tabs"></div>
   <div class="viewport"><div class="rail" id="rail">
 
@@ -212,7 +212,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     </div>
 
   </div></div>
-  <div class="ctrl"><button id="prev" aria-label="Previous">‹</button><span id="count">1 / 5</span><button id="next" aria-label="Next">›</button></div>
+  <div class="ctrl"><button id="prev" aria-label="Previous">â€¹</button><span id="count">1 / 5</span><button id="next" aria-label="Next">â€º</button></div>
 </div></section>
 
 <section id="idm"><div class="wrap">
@@ -224,8 +224,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       <tr><td>Disk writes</td><td>Temporary file per chunk</td><td>Direct writes into the final file</td></tr>
       <tr><td>NTFS allocation</td><td>Sequential temporary files</td><td>Instant sparse allocation</td></tr>
       <tr><td>99% assembly</td><td>30 s to 5+ min</td><td>0 ms</td></tr>
-      <tr><td>Write amplification</td><td>2×</td><td>1×</td></tr>
-      <tr><td>Free space required</td><td>2 × the file size</td><td>1 × the file size</td></tr>
+      <tr><td>Write amplification</td><td>2Ã—</td><td>1Ã—</td></tr>
+      <tr><td>Free space required</td><td>2 Ã— the file size</td><td>1 Ã— the file size</td></tr>
       <tr><td>Kernel drivers</td><td>Yes (network drivers)</td><td>None, user mode only</td></tr>
       <tr><td>Video / audio merging</td><td>External tools</td><td>Built in, no FFmpeg</td></tr>
       <tr><td>Size</td><td>Several executables and runtimes</td><td>One executable, under 5 MB</td></tr>
@@ -252,19 +252,19 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   <h2>Ready to stop waiting at 99%?</h2>
   <p class="lead">Installer with setup wizard, or portable executable. Free and open source.</p>
   <div class="cta">
-    <a class="btn primary" href="https://github.com/Th3Gold3nRainbow/OctoHeft/releases/download/v0.1.0/OctoHeft_0.1.0_x64-setup.exe">Download OctoHeft</a>
+    <a class="btn primary" href="https://github.com/Th3Gold3nRainbow/OctoHeft/releases/download/v0.1.1/OctoHeft_0.1.1_x64-setup.exe">Download OctoHeft</a>
     <a class="btn ghost" href="https://github.com/Th3Gold3nRainbow/OctoHeft">Source code on GitHub</a>
   </div>
 </div></section>
 
-<footer><div class="wrap"><span>OctoHeft · MIT license</span><span>Built with Rust, Tauri v2 and React</span></div></footer>
+<footer><div class="wrap"><span>OctoHeft Â· MIT license</span><span>Built with Rust, Tauri v2 and React</span></div></footer>
 
 <script>
 (function(){
   var fo=document.getElementById('fo'),fi=document.getElementById('fi'),
       to=document.getElementById('to'),ti=document.getElementById('ti'),rn=document.getElementById('rn');
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var MSG_SAME='Both download at the same speed…',MSG_DONE='OctoHeft is done. IDM is still copying its temporary files.';
+  var MSG_SAME='Both download at the same speedâ€¦',MSG_DONE='OctoHeft is done. IDM is still copying its temporary files.';
   function run(){
     var t0=performance.now(),D=4500,A=5000;
     (function tick(now){
@@ -273,12 +273,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       var pi=Math.min(p*.99,.99);
       fi.style.width=pi*100+'%';
       if(t<D){ti.textContent=Math.round(pi*100)+'%';rn.textContent=MSG_SAME;}
-      else if(t<D+A){var s=Math.round((t-D)/A*47);ti.textContent='Assembling… '+s+' s';rn.textContent=MSG_DONE;fi.style.width=(99+(t-D)/A)+'%';}
+      else if(t<D+A){var s=Math.round((t-D)/A*47);ti.textContent='Assemblingâ€¦ '+s+' s';rn.textContent=MSG_DONE;fi.style.width=(99+(t-D)/A)+'%';}
       else{ti.textContent='Done';fi.style.width='100%';if(t>D+A+1800)return setTimeout(run,600);}
       requestAnimationFrame(tick);
     })(t0);
   }
-  if(reduce){fo.style.width='100%';fi.style.width='99%';to.textContent='Done';ti.textContent='Assembling…';rn.textContent=MSG_DONE;}
+  if(reduce){fo.style.width='100%';fi.style.width='99%';to.textContent='Done';ti.textContent='Assemblingâ€¦';rn.textContent=MSG_DONE;}
   else run();
 
   var names=['Dashboard','OctoMedia','Batch','Scheduler','Settings'];
@@ -304,3 +304,4 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 </script>
 </body>
 </html>
+
