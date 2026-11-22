@@ -53,6 +53,8 @@
   "header.clipboardMonitor": "Clipboard Monitor",
   "header.clipboardMonitorTitle": "Clipboard Monitor (Enable/Disable)",
   "header.themeTitle": "Theme: {{theme}} (Click to switch)",
+  "header.themeLight": "Light",
+  "header.themeDark": "Dark",
   "header.addUrl": "Add URL",
 
   "status.downloading": "Downloading",

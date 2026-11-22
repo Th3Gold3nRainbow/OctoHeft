@@ -304,14 +304,16 @@ export const DownloadDetailModal: React.FC<DownloadDetailModalProps> = ({
               <div className="h-4 w-full bg-slate-200/90 dark:bg-slate-700 rounded-lg overflow-hidden flex gap-[2px] p-[2px]">
                 {segments.length > 0 ? (
                   segments.map((seg, idx) => {
-                    const segSpan = seg.end_byte - seg.start_byte + 1;
+                    const segSpan = seg.end_byte >= seg.start_byte ? seg.end_byte - seg.start_byte + 1 : 0;
                     const total = task.total_size > 0 ? task.total_size : 1;
-                    const segWidthPct = Math.max(4, (segSpan / total) * 100);
+                    const segWidthPct = segments.length === 1 ? 100 : Math.max(4, (segSpan / total) * 100);
                     const segDonePct =
-                      segSpan > 0
-                        ? Math.min(100, Math.max(0, (seg.downloaded / segSpan) * 100))
-                        : isCompleted
+                      isCompleted || seg.status === 'completed'
                         ? 100
+                        : segSpan > 0
+                        ? Math.min(100, Math.max(0, (seg.downloaded / segSpan) * 100))
+                        : task.total_size > 0
+                        ? Math.min(100, Math.max(0, (seg.downloaded / task.total_size) * 100))
                         : 0;
                     const barColor =
                       seg.status === 'completed' || isCompleted
@@ -426,13 +428,21 @@ export const DownloadDetailModal: React.FC<DownloadDetailModalProps> = ({
 
               <div className="space-y-2 max-h-44 overflow-y-auto pe-1">
                 {segments.map((seg, idx) => {
-                  const segSpan = seg.end_byte - seg.start_byte + 1;
+                  const segSpan = seg.end_byte >= seg.start_byte ? seg.end_byte - seg.start_byte + 1 : 0;
                   const segPercent =
-                    segSpan > 0
-                      ? Math.min(100, Math.floor((seg.downloaded / segSpan) * 100))
-                      : isCompleted
+                    isCompleted || seg.status === 'completed'
                       ? 100
+                      : segSpan > 0
+                      ? Math.min(100, Math.floor((seg.downloaded / segSpan) * 100))
+                      : task.total_size > 0
+                      ? Math.min(100, Math.floor((seg.downloaded / task.total_size) * 100))
                       : 0;
+                  const displayEnd =
+                    seg.end_byte > 0
+                      ? seg.end_byte
+                      : task.total_size > 0 && segments.length === 1
+                      ? task.total_size - 1
+                      : seg.start_byte;
 
                   return (
                     <div
@@ -445,7 +455,7 @@ export const DownloadDetailModal: React.FC<DownloadDetailModalProps> = ({
                             {t('detailModal.connLabel', { id: seg.id + 1 })}
                           </span>
                           <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400" dir="ltr">
-                            [{formatBytes(seg.start_byte)} - {formatBytes(seg.end_byte)}]
+                            [{formatBytes(seg.start_byte)} - {formatBytes(displayEnd)}]
                           </span>
                         </div>
                         <div className="flex items-center gap-3">

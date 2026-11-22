@@ -19,15 +19,8 @@ export default {
           50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
-          800: '#1e293b',
-          900: '#0f172a',
-        },
-        neon: {
-          bg: '#00122e',
-          surface: '#021a42',
-          card: 'rgba(2, 26, 66, 0.85)',
-          border: 'rgba(0, 195, 255, 0.3)',
-          glow: '#00f0ff',
+          800: '#1e1e22',
+          900: '#141416',
         },
       },
       fontFamily: {
@@ -42,9 +35,5 @@ export default {
       },
     },
   },
-  plugins: [
-    function ({ addVariant }) {
-      addVariant('neon', 'html.neon &');
-    },
-  ],
+  plugins: [],
 }

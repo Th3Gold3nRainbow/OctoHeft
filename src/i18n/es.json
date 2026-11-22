@@ -53,6 +53,8 @@
   "header.clipboardMonitor": "Monitor del portapapeles",
   "header.clipboardMonitorTitle": "Monitor del portapapeles (Activar/Desactivar)",
   "header.themeTitle": "Tema: {{theme}} (Haz clic para cambiar)",
+  "header.themeLight": "Claro",
+  "header.themeDark": "Oscuro",
   "header.addUrl": "Añadir URL",
 
   "status.downloading": "Descargando",

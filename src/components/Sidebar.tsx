@@ -2,6 +2,7 @@ import React from 'react';
 import { DiskSpaceStats, DownloadCategory, DownloadTask } from '../types';
 import { formatBytes } from '../utils';
 import { useI18n } from '../i18n';
+import { useAppVersion } from '../hooks/useAppVersion';
 import {
   FolderArchive,
   Terminal,
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   sessionDownloadedBytes,
 }) => {
   const { t, language } = useI18n();
+  const appVersion = useAppVersion();
 
   const categories: { id: DownloadCategory; label: string; icon: React.ReactNode }[] = [
     { id: 'all', label: t('sidebar.category.all'), icon: <Layers className="h-4 w-4" /> },
@@ -63,22 +65,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       id: 'all',
       label: t('sidebar.status.all'),
-      icon: <Layers className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />,
+      icon: <Layers className="h-4 w-4 text-slate-500 dark:text-slate-400 shrink-0" />,
     },
     {
       id: 'downloading',
       label: t('sidebar.status.downloading'),
-      icon: <ArrowDownCircle className="h-3.5 w-3.5 text-sky-600 dark:text-cyan-400" />,
+      icon: <ArrowDownCircle className="h-4 w-4 text-sky-600 dark:text-cyan-400 shrink-0" />,
     },
     {
       id: 'completed',
       label: t('sidebar.status.completed'),
-      icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />,
+      icon: <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />,
     },
     {
       id: 'paused',
       label: t('sidebar.status.paused'),
-      icon: <PauseCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />,
+      icon: <PauseCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />,
     },
   ];
 
@@ -96,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="card-surface w-56 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-md border-e border-slate-200/80 dark:border-slate-800 p-3.5 flex flex-col gap-3 min-h-0 shrink-0 select-none">
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pe-0.5">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 px-0.5">
         {/* Brand Header */}
         <div className="flex items-center gap-2.5 px-2">
           <img
@@ -106,14 +108,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             height={34}
             className="h-8 w-8 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 object-cover"
           />
-          <div>
-            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-              OctoHeft
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/90 text-sky-800 dark:text-cyan-300 border border-sky-200 dark:border-cyan-500/40 font-semibold">
-                v2.0
+          <div className="min-w-0">
+            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-1.5 whitespace-nowrap">
+              <span>OctoHeft</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/90 text-sky-800 dark:text-cyan-300 border border-sky-200 dark:border-cyan-500/40 font-semibold whitespace-nowrap shrink-0">
+                v{appVersion}
               </span>
             </span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('sidebar.subtitle')}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{t('sidebar.subtitle')}</p>
           </div>
         </div>
 
@@ -122,30 +124,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
             {t('sidebar.workspace')}
           </span>
-          <nav aria-label={t('sidebar.workspace')} className="space-y-1">
+          <nav aria-label={t('sidebar.workspace')} className="space-y-1 p-0.5">
             <button
               type="button"
               aria-current={activeView === 'downloads' ? 'page' : undefined}
               onClick={() => onSelectView('downloads')}
-              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 min-h-[34px] rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
                 activeView === 'downloads'
-                  ? 'bg-sky-600/12 dark:bg-sky-500/20 text-sky-900 dark:text-cyan-200 font-semibold ring-1 ring-sky-500/25 dark:ring-cyan-400/40 shadow-sm'
-                  : 'text-slate-700 dark:text-slate-300 font-medium hover:bg-white/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
+                  ? 'octoheft-subcard bg-sky-600/12 dark:bg-slate-800 text-sky-900 dark:text-slate-100 font-semibold shadow-sm ring-1 ring-sky-500/25 dark:ring-0 border border-transparent dark:border-slate-700'
+                  : 'border border-transparent text-slate-700 dark:text-slate-300 font-medium hover:bg-white/80 dark:hover:bg-[#242429] hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <span className="flex items-center gap-2.5">
+              <span className="flex items-center gap-2.5 min-w-0">
                 <ListChecks
-                  className={`h-4 w-4 ${
+                  className={`h-4 w-4 shrink-0 ${
                     activeView === 'downloads'
-                      ? 'text-sky-600 dark:text-cyan-400'
+                      ? 'text-sky-600 dark:text-slate-300'
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
                   aria-hidden="true"
                 />
-                <span>{t('sidebar.viewDownloads')}</span>
+                <span className="truncate">{t('sidebar.viewDownloads')}</span>
               </span>
               {safeTasks.length > 0 && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
                   {safeTasks.length}
                 </span>
               )}
@@ -155,25 +157,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
               type="button"
               aria-current={activeView === 'octomedia' ? 'page' : undefined}
               onClick={() => onSelectView('octomedia')}
-              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 min-h-[34px] rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
                 activeView === 'octomedia'
-                  ? 'bg-sky-700 text-white font-semibold shadow-sm dark:ring-1 dark:ring-cyan-400/40'
-                  : 'text-slate-700 dark:text-slate-300 font-medium hover:bg-white/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
+                  ? 'octoheft-subcard bg-sky-700 dark:bg-slate-800 text-white dark:text-slate-100 font-semibold shadow-sm border border-transparent dark:border-slate-700 dark:ring-0'
+                  : 'border border-transparent text-slate-700 dark:text-slate-300 font-medium hover:bg-white/80 dark:hover:bg-[#242429] hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <span className="flex items-center gap-2.5">
+              <span className="flex items-center gap-2.5 min-w-0">
                 <Clapperboard
-                  className={`h-4 w-4 ${
-                    activeView === 'octomedia' ? 'text-white' : 'text-sky-600 dark:text-cyan-400'
+                  className={`h-4 w-4 shrink-0 ${
+                    activeView === 'octomedia' ? 'text-white dark:text-slate-300' : 'text-sky-600 dark:text-cyan-400'
                   }`}
                   aria-hidden="true"
                 />
-                <span>{t('sidebar.viewOctoMedia')}</span>
+                <span className="truncate">{t('sidebar.viewOctoMedia')}</span>
               </span>
               <span
-                className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold shrink-0 ${
                   activeView === 'octomedia'
-                    ? 'bg-white/20 text-white'
+                    ? 'bg-white/20 text-white dark:bg-slate-800 dark:text-slate-300 dark:border dark:border-slate-700'
                     : 'bg-sky-100 dark:bg-sky-950/90 text-sky-800 dark:text-cyan-300 border border-sky-200 dark:border-cyan-500/40'
                 }`}
               >
@@ -188,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
             {t('sidebar.categories')}
           </span>
-          <nav aria-label={t('sidebar.categories')} className="space-y-0.5">
+          <nav aria-label={t('sidebar.categories')} className="space-y-0.5 p-0.5">
             {categories.map((cat) => {
               const count = getCategoryCount(cat.id);
               const isActive = activeView === 'downloads' && currentCategory === cat.id;
@@ -201,29 +203,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onSelectCategory(cat.id);
                     onSelectView('downloads');
                   }}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 min-h-[34px] rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
                     isActive
-                      ? 'bg-sky-600/10 dark:bg-sky-500/20 text-sky-800 dark:text-cyan-200 font-semibold shadow-2xs ring-1 ring-sky-500/20 dark:ring-cyan-400/35'
-                      : 'text-slate-600 dark:text-slate-300 font-medium hover:bg-white/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
+                      ? 'octoheft-subcard bg-sky-600/10 dark:bg-slate-800 text-sky-800 dark:text-slate-100 font-semibold shadow-2xs ring-1 ring-sky-500/20 dark:ring-0 border border-transparent dark:border-slate-700'
+                      : 'border border-transparent text-slate-600 dark:text-slate-300 font-medium hover:bg-white/80 dark:hover:bg-[#242429] hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className={
+                      className={`shrink-0 ${
                         isActive
-                          ? 'text-sky-600 dark:text-cyan-400'
+                          ? 'text-sky-600 dark:text-slate-300'
                           : 'text-slate-500 dark:text-slate-400'
-                      }
+                      }`}
                     >
                       {cat.icon}
                     </span>
-                    <span>{cat.label}</span>
+                    <span className="truncate">{cat.label}</span>
                   </div>
                   {count > 0 && (
                     <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full shrink-0 ${
                         isActive
-                          ? 'bg-sky-700 text-white font-semibold'
+                          ? 'bg-sky-700 text-white font-semibold dark:bg-slate-800 dark:text-slate-300 dark:font-normal'
                           : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}
                     >
@@ -241,7 +243,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
             {t('sidebar.status')}
           </span>
-          <nav aria-label={t('sidebar.status')} className="space-y-0.5">
+          <nav aria-label={t('sidebar.status')} className="space-y-0.5 p-0.5">
             {statuses.map((st) => {
               const count = getStatusCount(st.id);
               const isActive = activeView === 'downloads' && currentStatus === st.id;
@@ -254,18 +256,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onSelectStatus(st.id);
                     onSelectView('downloads');
                   }}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 min-h-[34px] rounded-lg text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600 focus-visible:outline-offset-2 ${
                     isActive
                       ? 'octoheft-subcard bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold shadow-sm border border-slate-200/90 dark:border-slate-700'
-                      : 'text-slate-600 dark:text-slate-300 font-medium hover:bg-white/70 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white'
+                      : 'border border-transparent text-slate-600 dark:text-slate-300 font-medium hover:bg-white/70 dark:hover:bg-[#242429] hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    {st.icon}
-                    <span>{st.label}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="shrink-0">{st.icon}</span>
+                    <span className="truncate">{st.label}</span>
                   </div>
                   {count > 0 && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
                       {count}
                     </span>
                   )}

@@ -53,6 +53,8 @@
   "header.clipboardMonitor": "مراقب الحافظة",
   "header.clipboardMonitorTitle": "مراقبة الحافظة (تفعيل/تعطيل)",
   "header.themeTitle": "المظهر: {{theme}} (انقر للتبديل)",
+  "header.themeLight": "فاتح",
+  "header.themeDark": "داكن",
   "header.addUrl": "إضافة رابط",
 
   "status.downloading": "جاري التنزيل",

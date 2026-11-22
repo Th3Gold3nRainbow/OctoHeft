@@ -1,6 +1,6 @@
 use crate::engine::categories::CategoryDispatcher;
 use crate::engine::chunk_worker::{
-    send_request_with_headers, ChunkWorker, SpeedLimiter, WorkerProgressEvent,
+    send_request_with_headers, ChunkWorker, ConcurrencyGovernor, SpeedLimiter, WorkerProgressEvent,
     DEFAULT_BROWSER_USER_AGENT, SEG_STATE_COMPLETED, SEG_STATE_DOWNLOADING, SEG_STATE_FAILED,
     SEG_STATE_PENDING,
 };
@@ -27,6 +27,8 @@ use url::Url;
 struct ActiveTaskControl {
     cancel_tx: watch::Sender<bool>,
     speed_limiter: SpeedLimiter,
+    #[allow(dead_code)]
+    governor: Arc<ConcurrencyGovernor>,
 }
 
 pub struct DownloadEngine {
@@ -233,12 +235,9 @@ impl DownloadEngine {
         }
         let headers = get_res.headers();
 
-        let accepts_ranges = status == reqwest::StatusCode::PARTIAL_CONTENT
-            || headers
-                .get(reqwest::header::ACCEPT_RANGES)
-                .and_then(|v| v.to_str().ok())
-                .map(|v| v.eq_ignore_ascii_case("bytes"))
-                .unwrap_or(false);
+        // Ranged probe strictly verifies HTTP 206 Partial Content.
+        // If a server returned 200 OK to a Range: bytes=0-0 probe, it does NOT support range requests.
+        let accepts_ranges = status == reqwest::StatusCode::PARTIAL_CONTENT;
 
         let content_len = if let Some(cr) = headers
             .get(reqwest::header::CONTENT_RANGE)
@@ -337,6 +336,7 @@ impl DownloadEngine {
 
         let (cancel_tx, cancel_rx) = watch::channel(false);
         let speed_limiter = SpeedLimiter::new(self.global_speed_limiter.get_rate());
+        let governor = ConcurrencyGovernor::new(task.segments.len());
 
         {
             let mut controls = self.active_controls.write();
@@ -345,6 +345,7 @@ impl DownloadEngine {
                 ActiveTaskControl {
                     cancel_tx,
                     speed_limiter: speed_limiter.clone(),
+                    governor: Arc::clone(&governor),
                 },
             );
         }
@@ -370,7 +371,7 @@ impl DownloadEngine {
 
         let initial_downloaded: u64 = task.segments.iter().map(|s| s.downloaded).sum();
         let shared_downloaded_bytes = Arc::new(AtomicU64::new(initial_downloaded));
-        let mut seg_handles: Vec<(Arc<AtomicU64>, Arc<AtomicU8>)> =
+        let mut seg_handles: Vec<(Arc<AtomicU64>, Arc<AtomicU64>, Arc<AtomicU8>)> =
             Vec::with_capacity(task.segments.len());
 
         // Spawn chunk workers (workers increment lock-free atomics only; no per-packet IPC spam)
@@ -378,6 +379,7 @@ impl DownloadEngine {
             if seg.status == SegmentStatus::Completed {
                 seg_handles.push((
                     Arc::new(AtomicU64::new(seg.current_byte)),
+                    Arc::new(AtomicU64::new(seg.end_byte)),
                     Arc::new(AtomicU8::new(SEG_STATE_COMPLETED)),
                 ));
                 continue;
@@ -396,10 +398,15 @@ impl DownloadEngine {
                 cancel_rx.clone(),
                 progress_tx.clone(),
                 Arc::clone(&shared_downloaded_bytes),
+                Arc::clone(&governor),
+                task.segments.len(),
+                task.total_size,
+                task.supports_range,
             );
 
             seg_handles.push((
                 Arc::clone(&worker.current_offset),
+                Arc::clone(&worker.end_byte),
                 Arc::clone(&worker.segment_state),
             ));
 
@@ -414,9 +421,12 @@ impl DownloadEngine {
         let tid = task_id.to_string();
         let total_size = task.total_size;
         let mut segments = task.segments.clone();
+        let bg_governor = Arc::clone(&governor);
+        let orchestrator_cancel_rx = cancel_rx.clone();
 
         // Dedicated fixed-cadence (200 ms / 5 Hz) telemetry orchestrator with EWMA smoothing & hysteresis
         spawn_bg(async move {
+            let mut current_total_size = total_size;
             let mut speed_tracker = EwmaSpeedTracker::new(initial_downloaded);
             speed_tracker.seed_clock(initial_downloaded, Instant::now());
 
@@ -433,6 +443,17 @@ impl DownloadEngine {
                     maybe_event = progress_rx.recv() => {
                         match maybe_event {
                             Some(event) => {
+                                if let Some(discovered) = event.discovered_total_size {
+                                    if discovered > 0 {
+                                        if current_total_size == 0 {
+                                            current_total_size = discovered;
+                                            store_clone.update_total_and_connections(&tid, discovered, segments.len());
+                                        }
+                                        if segments.len() == 1 {
+                                            segments[0].end_byte = discovered.saturating_sub(1);
+                                        }
+                                    }
+                                }
                                 if let Some(err) = event.error {
                                     last_error = Some(err);
                                 }
@@ -446,11 +467,11 @@ impl DownloadEngine {
                         let smoothed_speed = speed_tracker.sample_at(atomic_bytes, Instant::now());
 
                         let mut downloaded_sum = snapshot_segment_atomics(&mut segments, &seg_handles);
-                        if total_size > 0 {
-                            downloaded_sum = downloaded_sum.min(total_size);
+                        if current_total_size > 0 {
+                            downloaded_sum = downloaded_sum.min(current_total_size);
                         }
 
-                        let eta = speed_tracker.compute_eta(total_size, downloaded_sum);
+                        let eta = speed_tracker.compute_eta(current_total_size, downloaded_sum);
 
                         store_clone.update_progress(
                             &tid,
@@ -465,7 +486,7 @@ impl DownloadEngine {
                                 id: tid.clone(),
                                 status: DownloadStatus::Downloading,
                                 downloaded_bytes: downloaded_sum,
-                                total_size,
+                                total_size: current_total_size,
                                 speed: smoothed_speed,
                                 eta_seconds: eta,
                                 segments: segments.clone(),
@@ -480,33 +501,157 @@ impl DownloadEngine {
 
             // Final state evaluation
             let mut downloaded_sum = snapshot_segment_atomics(&mut segments, &seg_handles);
-            if total_size > 0 {
-                downloaded_sum = downloaded_sum.min(total_size);
+            let on_disk_len = std::fs::metadata(&save_path).map(|m| m.len()).unwrap_or(0);
+
+            // 1. If total_size was unknown (0), finalize total_size from on-disk length or downloaded bytes
+            if current_total_size == 0 {
+                let finalized_size = if on_disk_len > 0 {
+                    on_disk_len
+                } else {
+                    downloaded_sum
+                };
+                if finalized_size > 0 {
+                    current_total_size = finalized_size;
+                    store_clone.update_total_and_connections(&tid, finalized_size, segments.len());
+                }
+            }
+
+            // 2. For single-stream downloads (1 segment), synchronize segment 0 bounds and completion
+            if segments.len() == 1 && current_total_size > 0 {
+                if let Some(first) = segments.first_mut() {
+                    first.end_byte = current_total_size.saturating_sub(1);
+                    if first.current_byte >= current_total_size || downloaded_sum >= current_total_size {
+                        first.current_byte = current_total_size;
+                        first.downloaded = current_total_size;
+                        first.status = SegmentStatus::Completed;
+                    }
+                }
+            }
+
+            // 3. If server refused ranges and single-stream sequential fallback occurred, sync segments
+            let fallback_active = bg_governor.fallback_single_stream.load(Ordering::SeqCst);
+            if fallback_active {
+                if let Some(first) = segments.first_mut() {
+                    if current_total_size > 0 {
+                        first.end_byte = current_total_size.saturating_sub(1);
+                    }
+                    if first.current_byte >= current_total_size && current_total_size > 0 {
+                        first.status = SegmentStatus::Completed;
+                        first.downloaded = current_total_size;
+                    }
+                }
+                for s in segments.iter_mut().skip(1) {
+                    s.status = SegmentStatus::Completed;
+                    s.current_byte = s.end_byte.saturating_add(1);
+                    s.downloaded = s.end_byte.saturating_sub(s.start_byte).saturating_add(1);
+                }
+            }
+
+            if current_total_size > 0 {
+                downloaded_sum = downloaded_sum.min(current_total_size);
             }
             speed_tracker.reset(downloaded_sum);
 
-            let all_completed = segments.iter().all(|s| s.status == SegmentStatus::Completed)
-                || (total_size > 0 && downloaded_sum >= total_size);
+            let segments_all_completed = segments.iter().all(|s| s.status == SegmentStatus::Completed);
 
-            if all_completed {
-                let _ = sparse_file.sync_all();
-                store_clone.update_progress(&tid, total_size, 0, Some(0), segments.clone());
-                store_clone.update_task_status(&tid, DownloadStatus::Completed, None);
-                info!(task_id = %tid, bytes = total_size, "Download completed with 0 ms assembly overhead");
+            // 4. Strict contiguous byte coverage verification: zero gaps, zero sparse holes
+            let mut contiguous_verified = false;
+            if current_total_size > 0 {
+                let mut sorted_segs = segments.clone();
+                sorted_segs.sort_by_key(|s| s.start_byte);
 
-                if let Some(ref app) = app_handle {
-                    let payload = DownloadProgressPayload {
-                        id: tid.clone(),
-                        status: DownloadStatus::Completed,
-                        downloaded_bytes: total_size,
-                        total_size,
-                        speed: 0,
-                        eta_seconds: Some(0),
-                        segments: segments.clone(),
-                        error_message: None,
-                        media_info: None,
-                    };
-                    let _ = app.emit("download-progress", &payload);
+                if !sorted_segs.is_empty() && sorted_segs[0].start_byte == 0 {
+                    let mut expected_next = 0u64;
+                    let mut valid_chain = true;
+                    for s in &sorted_segs {
+                        if s.start_byte != expected_next {
+                            valid_chain = false;
+                            break;
+                        }
+                        expected_next = s.end_byte.saturating_add(1);
+                    }
+                    if valid_chain && expected_next == current_total_size && downloaded_sum >= current_total_size {
+                        contiguous_verified = true;
+                    }
+                }
+            } else if segments_all_completed {
+                contiguous_verified = true;
+            }
+
+            let is_verified_complete = segments_all_completed && contiguous_verified;
+
+            if is_verified_complete {
+                // Ensure physical file length matches exact verified total_size before sync
+                if current_total_size > 0 {
+                    let _ = sparse_file.get_arc_handle().set_len(current_total_size);
+                }
+
+                if let Err(e) = sparse_file.sync_all() {
+                    let err_msg = format!("Failed to flush file buffers to disk: {}", e);
+                    error!(task_id = %tid, "{}", err_msg);
+                    store_clone.update_progress(&tid, downloaded_sum, 0, None, segments.clone());
+                    store_clone.update_task_status(&tid, DownloadStatus::Error, Some(err_msg.clone()));
+
+                    if let Some(ref app) = app_handle {
+                        let payload = DownloadProgressPayload {
+                            id: tid.clone(),
+                            status: DownloadStatus::Error,
+                            downloaded_bytes: downloaded_sum,
+                            total_size: current_total_size,
+                            speed: 0,
+                            eta_seconds: None,
+                            segments: segments.clone(),
+                            error_message: Some(err_msg),
+                            media_info: None,
+                        };
+                        let _ = app.emit("download-progress", &payload);
+                    }
+                } else {
+                    let on_disk_len = std::fs::metadata(&save_path).map(|m| m.len()).unwrap_or(0);
+                    if current_total_size > 0 && on_disk_len != current_total_size {
+                        let err_msg = format!(
+                            "File length verification mismatch: file on disk is {} bytes, expected {} bytes",
+                            on_disk_len, current_total_size
+                        );
+                        error!(task_id = %tid, "{}", err_msg);
+                        store_clone.update_progress(&tid, downloaded_sum, 0, None, segments.clone());
+                        store_clone.update_task_status(&tid, DownloadStatus::Error, Some(err_msg.clone()));
+
+                        if let Some(ref app) = app_handle {
+                            let payload = DownloadProgressPayload {
+                                id: tid.clone(),
+                                status: DownloadStatus::Error,
+                                downloaded_bytes: downloaded_sum,
+                                total_size: current_total_size,
+                                speed: 0,
+                                eta_seconds: None,
+                                segments: segments.clone(),
+                                error_message: Some(err_msg),
+                                media_info: None,
+                            };
+                            let _ = app.emit("download-progress", &payload);
+                        }
+                    } else {
+                        store_clone.update_total_and_connections(&tid, current_total_size, segments.len());
+                        store_clone.update_progress(&tid, current_total_size, 0, Some(0), segments.clone());
+                        store_clone.update_task_status(&tid, DownloadStatus::Completed, None);
+                        info!(task_id = %tid, bytes = current_total_size, "Download completed with 100% verified contiguous byte coverage and disk sync");
+
+                        if let Some(ref app) = app_handle {
+                            let payload = DownloadProgressPayload {
+                                id: tid.clone(),
+                                status: DownloadStatus::Completed,
+                                downloaded_bytes: current_total_size,
+                                total_size: current_total_size,
+                                speed: 0,
+                                eta_seconds: Some(0),
+                                segments: segments.clone(),
+                                error_message: None,
+                                media_info: None,
+                            };
+                            let _ = app.emit("download-progress", &payload);
+                        }
+                    }
                 }
             } else if let Some(err_msg) = last_error {
                 warn!(task_id = %tid, error = %err_msg, "Download stopped with segment error");
@@ -518,7 +663,7 @@ impl DownloadEngine {
                         id: tid.clone(),
                         status: DownloadStatus::Error,
                         downloaded_bytes: downloaded_sum,
-                        total_size,
+                        total_size: current_total_size,
                         speed: 0,
                         eta_seconds: None,
                         segments: segments.clone(),
@@ -528,23 +673,33 @@ impl DownloadEngine {
                     let _ = app.emit("download-progress", &payload);
                 }
             } else {
-                // If stopped by cancel/pause: reset speed cleanly to 0
+                // Check if cancel/pause was genuinely requested by user
+                let was_cancelled = *orchestrator_cancel_rx.borrow();
                 store_clone.update_progress(&tid, downloaded_sum, 0, None, segments.clone());
+
+                let (target_status, err_opt) = if was_cancelled {
+                    (DownloadStatus::Paused, None)
+                } else {
+                    let msg = "Download stream closed prematurely before completing all bytes".to_string();
+                    warn!(task_id = %tid, "{}", msg);
+                    (DownloadStatus::Error, Some(msg))
+                };
+
                 let current_task = store_clone.get_task(&tid);
                 if let Some(t) = current_task {
                     if t.status == DownloadStatus::Downloading {
-                        store_clone.update_task_status(&tid, DownloadStatus::Paused, None);
+                        store_clone.update_task_status(&tid, target_status.clone(), err_opt.clone());
                     }
                     if let Some(ref app) = app_handle {
                         let payload = DownloadProgressPayload {
                             id: tid.clone(),
-                            status: DownloadStatus::Paused,
+                            status: target_status,
                             downloaded_bytes: downloaded_sum,
-                            total_size,
+                            total_size: current_total_size,
                             speed: 0,
                             eta_seconds: None,
                             segments: segments.clone(),
-                            error_message: None,
+                            error_message: err_opt,
                             media_info: None,
                         };
                         let _ = app.emit("download-progress", &payload);
@@ -562,12 +717,14 @@ impl DownloadEngine {
         self.stop_internal(task_id);
         let (cancel_tx, cancel_rx) = watch::channel(false);
         let speed_limiter = SpeedLimiter::new(self.global_speed_limiter.get_rate());
+        let governor = ConcurrencyGovernor::new(1);
         let mut controls = self.active_controls.write();
         controls.insert(
             task_id.to_string(),
             ActiveTaskControl {
                 cancel_tx,
                 speed_limiter,
+                governor,
             },
         );
         cancel_rx
@@ -619,11 +776,15 @@ impl DownloadEngine {
 
 fn snapshot_segment_atomics(
     segments: &mut [SegmentProgress],
-    handles: &[(Arc<AtomicU64>, Arc<AtomicU8>)],
+    handles: &[(Arc<AtomicU64>, Arc<AtomicU64>, Arc<AtomicU8>)],
 ) -> u64 {
     let mut sum = 0u64;
-    for (seg, (offset_arc, state_arc)) in segments.iter_mut().zip(handles.iter()) {
+    for (seg, (offset_arc, end_arc, state_arc)) in segments.iter_mut().zip(handles.iter()) {
         let cur = offset_arc.load(Ordering::Acquire);
+        let end = end_arc.load(Ordering::Acquire);
+        if end > 0 || (end == 0 && cur == 0) {
+            seg.end_byte = end;
+        }
         seg.current_byte = cur;
         seg.downloaded = cur.saturating_sub(seg.start_byte);
         seg.status = match state_arc.load(Ordering::Acquire) {

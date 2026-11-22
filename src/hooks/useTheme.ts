@@ -1,18 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-export type ThemeMode = 'light' | 'dark' | 'neon';
+export type ThemeMode = 'light' | 'dark';
 
 export const THEME_STORAGE_KEY = 'octoheft_theme';
 const THEME_CHANGE_EVENT = 'octoheft-theme-change';
-const THEME_CYCLE_ORDER: readonly ThemeMode[] = ['light', 'dark', 'neon'];
+const THEME_CYCLE_ORDER: readonly ThemeMode[] = ['light', 'dark'];
 
 function isValidThemeMode(value: string | null): value is ThemeMode {
-  return value === 'light' || value === 'dark' || value === 'neon';
+  return value === 'light' || value === 'dark';
 }
 
 function readStoredTheme(): ThemeMode | null {
   try {
     const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (raw === 'neon') {
+      // Seamlessly migrate legacy neon theme to obsidian dark
+      window.localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+      return 'dark';
+    }
     return isValidThemeMode(raw) ? raw : null;
   } catch {
     return null;
@@ -34,16 +39,18 @@ export function applyThemeToDocument(mode: ThemeMode, hasExplicitOverride = true
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
 
-  root.classList.remove('dark', 'neon');
+  root.classList.remove('neon');
   if (mode === 'dark') {
     root.classList.add('dark');
-  } else if (mode === 'neon') {
-    root.classList.add('dark', 'neon');
+  } else {
+    root.classList.remove('dark');
   }
+
+  root.style.colorScheme = mode;
 
   const meta = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
   if (meta) {
-    meta.content = !hasExplicitOverride ? 'light dark' : mode === 'light' ? 'light' : 'dark';
+    meta.content = !hasExplicitOverride ? 'light dark' : mode;
   }
 }
 
@@ -66,7 +73,8 @@ export function useTheme() {
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key !== THEME_STORAGE_KEY) return;
-      const next = isValidThemeMode(e.newValue) ? e.newValue : getSystemTheme();
+      const val = e.newValue === 'neon' ? 'dark' : e.newValue;
+      const next = isValidThemeMode(val) ? val : getSystemTheme();
       themeRef.current = next;
       setThemeState(next);
     };

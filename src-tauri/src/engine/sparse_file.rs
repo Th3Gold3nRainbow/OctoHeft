@@ -83,6 +83,35 @@ impl SparseFile {
         }
     }
 
+    /// Directly and fully writes all bytes at a given offset concurrently without modifying a shared seek pointer.
+    /// Loops until the entire slice is written, eliminating partial write gaps under concurrent I/O.
+    pub fn write_all_at(&self, mut offset: u64, mut data: &[u8]) -> io::Result<()> {
+        while !data.is_empty() {
+            #[cfg(windows)]
+            let n = {
+                use std::os::windows::fs::FileExt;
+                self.file.seek_write(data, offset)?
+            };
+
+            #[cfg(unix)]
+            let n = {
+                use std::os::unix::fs::FileExt;
+                self.file.write_at(data, offset)?
+            };
+
+            if n == 0 {
+                return Err(io::Error::new(
+                    io::ErrorKind::WriteZero,
+                    "failed to write whole buffer",
+                ));
+            }
+
+            data = &data[n..];
+            offset = offset.saturating_add(n as u64);
+        }
+        Ok(())
+    }
+
     pub fn sync_all(&self) -> io::Result<()> {
         self.file.sync_all()
     }

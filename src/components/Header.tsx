@@ -13,7 +13,6 @@ import {
   Settings,
   Sun,
   Moon,
-  Zap,
   Clipboard,
   ClipboardCheck,
   Sparkles,
@@ -275,7 +274,8 @@ export const Header: React.FC<HeaderProps> = ({
     onSetGlobalSpeedLimit(bytes);
   };
 
-  const themeTooltip = t('header.themeTitle', { theme: theme.toUpperCase() });
+  const currentThemeLabel = theme === 'light' ? t('header.themeLight') : t('header.themeDark');
+  const themeTooltip = t('header.themeTitle', { theme: currentThemeLabel });
 
   return (
     <header className="octoheft-header card-surface border-b border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/85 backdrop-blur-md px-5 py-2.5 shrink-0">
@@ -335,9 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
                 -
               </span>
               <span
-                className={`font-mono tabular-nums font-bold text-sky-700 dark:text-sky-300 inline-block min-w-[82px] text-end ${
-                  theme === 'neon' ? 'accent-neon' : ''
-                }`}
+                className="font-mono tabular-nums font-bold text-sky-700 dark:text-sky-300 inline-block min-w-[82px] text-end"
               >
                 {formatSpeed(totalSpeed, language)}
               </span>
@@ -444,11 +442,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="font-semibold text-slate-800 dark:text-slate-100">
                         {t('header.speedLimiter')}
                       </span>
-                      <span
-                        className={`font-mono text-sky-700 dark:text-cyan-300 font-bold ${
-                          theme === 'neon' ? 'accent-neon' : ''
-                        }`}
-                      >
+                      <span className="font-mono text-sky-700 dark:text-cyan-300 font-bold">
                         {speedLimit === 0
                           ? t('header.unlimited')
                           : t('header.mbPerSec', { val: customSliderMb })}
@@ -551,26 +545,19 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </button>
 
-              {/* 3-Way Theme Toggle Button (Light -> Dark -> Neon), directly adjacent to Settings */}
+              {/* 2-Way Theme Toggle Button (Light <-> Dark), directly adjacent to Settings */}
               <button
                 type="button"
                 onClick={cycleTheme}
                 title={themeTooltip}
                 aria-label={themeTooltip}
                 data-theme-toggle={theme}
-                className="octoheft-toolbar-btn inline-flex items-center justify-center h-9 w-9 border-e border-slate-200/80 dark:border-slate-700/80 neon:border-cyan-500/30 neon:bg-[#021a42]/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/70 neon:hover:bg-[#03265e] transition-colors focus-visible:relative focus-visible:z-10 shrink-0"
+                className="octoheft-toolbar-btn inline-flex items-center justify-center h-9 w-9 border-e border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-colors focus-visible:relative focus-visible:z-10 shrink-0"
               >
-                {theme === 'light' && (
+                {theme === 'light' ? (
                   <Sun className="h-4 w-4 text-amber-500" aria-hidden="true" />
-                )}
-                {theme === 'dark' && (
+                ) : (
                   <Moon className="h-4 w-4 text-blue-400" aria-hidden="true" />
-                )}
-                {theme === 'neon' && (
-                  <Zap
-                    className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_6px_rgba(0,240,255,0.8)]"
-                    aria-hidden="true"
-                  />
                 )}
               </button>
 

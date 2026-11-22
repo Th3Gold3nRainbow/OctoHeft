@@ -53,6 +53,8 @@
   "header.clipboardMonitor": "剪贴板监控",
   "header.clipboardMonitorTitle": "剪贴板监控（开启/关闭）",
   "header.themeTitle": "主题：{{theme}}（点击切换）",
+  "header.themeLight": "浅色",
+  "header.themeDark": "深色",
   "header.addUrl": "添加链接",
 
   "status.downloading": "下载中",

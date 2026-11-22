@@ -53,6 +53,8 @@
   "header.clipboardMonitor": "Zwischenablage",
   "header.clipboardMonitorTitle": "Zwischenablage überwachen (Ein/Aus)",
   "header.themeTitle": "Design: {{theme}} (Zum Wechseln klicken)",
+  "header.themeLight": "Hell",
+  "header.themeDark": "Dunkel",
   "header.addUrl": "URL hinzufügen",
 
   "status.downloading": "Wird geladen",

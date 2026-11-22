@@ -99,28 +99,28 @@ export const DownloadTable: React.FC<DownloadTableProps> = ({
     switch (status) {
       case 'downloading':
         return (
-          <span className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-cyan-300 border border-sky-200 dark:border-cyan-500/40">
+          <span data-status="downloading" className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-cyan-300 border border-sky-200 dark:border-cyan-500/40">
             <span className="h-1.5 w-1.5 rounded-full bg-sky-500 dark:bg-cyan-400 animate-ping shrink-0" />
             <span className="truncate">{t('status.downloading')}</span>
           </span>
         );
       case 'connecting':
         return (
-          <span className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40">
+          <span data-status="connecting" className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40">
             <Clock className="h-3 w-3 animate-spin shrink-0" />
             <span className="truncate">{t('status.connecting')}</span>
           </span>
         );
       case 'completed':
         return (
-          <span className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40">
+          <span data-status="completed" className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40">
             <CheckCircle2 className="h-3 w-3 shrink-0" />
             <span className="truncate">{t('status.completed')}</span>
           </span>
         );
       case 'paused':
         return (
-          <span className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40">
+          <span data-status="paused" className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40">
             <Pause className="h-3 w-3 shrink-0" />
             <span className="truncate">{t('status.paused')}</span>
           </span>
@@ -128,6 +128,7 @@ export const DownloadTable: React.FC<DownloadTableProps> = ({
       case 'error':
         return (
           <span
+            data-status="error"
             className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/40"
             title={error || t('status.downloadFailed')}
           >
@@ -137,7 +138,7 @@ export const DownloadTable: React.FC<DownloadTableProps> = ({
         );
       default:
         return (
-          <span className="inline-flex items-center max-w-full px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          <span data-status={status} className="inline-flex items-center max-w-full px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
             <span className="truncate">{t('status.queued')}</span>
           </span>
         );

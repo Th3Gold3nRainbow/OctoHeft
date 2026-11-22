@@ -53,6 +53,8 @@
   "header.clipboardMonitor": "Presse-papiers",
   "header.clipboardMonitorTitle": "Surveillance du presse-papiers (Activer/Désactiver)",
   "header.themeTitle": "Thème : {{theme}} (Cliquer pour changer)",
+  "header.themeLight": "Clair",
+  "header.themeDark": "Sombre",
   "header.addUrl": "Ajouter URL",
 
   "status.downloading": "En cours",

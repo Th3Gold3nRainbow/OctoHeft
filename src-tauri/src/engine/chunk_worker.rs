@@ -1,12 +1,16 @@
 use crate::engine::error::EngineError;
 use crate::engine::rate_limiter::TokenBucketLimiter;
 use futures_util::StreamExt;
-use reqwest::header::{HeaderName, HeaderValue, ACCEPT, COOKIE, ORIGIN, RANGE, REFERER, USER_AGENT};
+use parking_lot::Mutex;
+use reqwest::header::{
+    HeaderName, HeaderValue, ACCEPT, ACCEPT_ENCODING, CONTENT_RANGE, COOKIE, ORIGIN, RANGE,
+    REFERER, RETRY_AFTER, USER_AGENT,
+};
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock};
-use std::time::Duration;
-use tokio::sync::{mpsc, watch};
+use std::time::{Duration, Instant};
+use tokio::sync::{mpsc, watch, Notify};
 use tracing::{debug, error, warn};
 use url::Url;
 
@@ -184,6 +188,9 @@ fn build_single_hop_request(
     let mut req = client.request(method, url);
     let mut applied_ua = false;
 
+    // Force raw uncompressed binary transfer so byte offsets and Content-Length always match exact file bytes
+    req = req.header(ACCEPT_ENCODING, "identity");
+
     for (k, v) in normalized_headers {
         let lower = k.to_ascii_lowercase();
         if !include_cookie && lower == "cookie" {
@@ -218,6 +225,10 @@ fn build_single_hop_request(
             if let Ok(hv) = HeaderValue::from_str(v) {
                 req = req.header(ACCEPT, hv);
             }
+            continue;
+        }
+        if lower == "accept-encoding" {
+            // Strictly preserve identity
             continue;
         }
         if let (Ok(name), Ok(val)) = (
@@ -326,6 +337,186 @@ pub(crate) async fn send_request_with_headers(
         .await
 }
 
+/// Atomically subtracts `delta` from `target` saturating at 0 without deprecation warnings.
+fn atomic_saturating_sub(target: &AtomicU64, delta: u64) {
+    let mut current = target.load(Ordering::SeqCst);
+    while current > 0 {
+        let new_val = current.saturating_sub(delta);
+        match target.compare_exchange_weak(current, new_val, Ordering::SeqCst, Ordering::SeqCst) {
+            Ok(_) => break,
+            Err(actual) => current = actual,
+        }
+    }
+}
+
+/// Atomically and fully writes a byte slice to an explicit positional file offset.
+/// Loops until all bytes in `buf` are committed to disk, eliminating partial write gaps under concurrent I/O.
+pub(crate) fn write_all_at(file: &std::fs::File, mut buf: &[u8], mut offset: u64) -> std::io::Result<()> {
+    while !buf.is_empty() {
+        #[cfg(windows)]
+        let n = {
+            use std::os::windows::fs::FileExt;
+            file.seek_write(buf, offset)?
+        };
+
+        #[cfg(unix)]
+        let n = {
+            use std::os::unix::fs::FileExt;
+            file.write_at(buf, offset)?
+        };
+
+        if n == 0 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::WriteZero,
+                "failed to write whole buffer to disk",
+            ));
+        }
+
+        buf = &buf[n..];
+        offset = offset.saturating_add(n as u64);
+    }
+    Ok(())
+}
+
+/// Parsed Content-Range header representation
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContentRangeHeader {
+    pub start: u64,
+    pub end: u64,
+    pub total: Option<u64>,
+}
+
+/// Safely parses RFC 9110 / RFC 7233 Content-Range: `bytes <start>-<end>/<total>` or `bytes <start>-<end>/*`
+pub fn parse_content_range(header_val: &str) -> Option<ContentRangeHeader> {
+    let val = header_val.trim();
+    let rest = val.strip_prefix("bytes ")?.trim_start();
+    let (range_part, total_part) = rest.split_once('/')?;
+    let (start_str, end_str) = range_part.trim().split_once('-')?;
+    let start = start_str.trim().parse::<u64>().ok()?;
+    let end = end_str.trim().parse::<u64>().ok()?;
+    let total = if total_part.trim() == "*" {
+        None
+    } else {
+        total_part.trim().parse::<u64>().ok()
+    };
+    Some(ContentRangeHeader { start, end, total })
+}
+
+/// Dynamic concurrency governor managing connection step-down on HTTP 429/503 and single-stream fallback.
+#[derive(Debug)]
+pub struct ConcurrencyGovernor {
+    /// Maximum concurrent active HTTP streams allowed (halved on 429: 16 -> 8 -> 4 -> 2 -> 1)
+    pub effective_cap: AtomicUsize,
+    /// Number of workers currently active in HTTP request dispatch or stream reading
+    pub active_workers: AtomicUsize,
+    /// Shared cooldown timestamp until which all workers must pause before requesting
+    pub cooldown_until: Mutex<Instant>,
+    /// Notifier to wake parked workers when an active slot or cooldown becomes available
+    pub notify_slot: Notify,
+    /// Flag activated if server refuses ranges on segment 0 and returns 200 OK (single-stream fallback)
+    pub fallback_single_stream: AtomicBool,
+}
+
+impl ConcurrencyGovernor {
+    pub fn new(initial_connections: usize) -> Arc<Self> {
+        Arc::new(Self {
+            effective_cap: AtomicUsize::new(initial_connections.max(1)),
+            active_workers: AtomicUsize::new(0),
+            cooldown_until: Mutex::new(Instant::now()),
+            notify_slot: Notify::new(),
+            fallback_single_stream: AtomicBool::new(false),
+        })
+    }
+
+    /// Halves the effective concurrency cap and sets a shared cooldown window.
+    pub fn on_rate_limit(&self, cooldown_duration: Duration) {
+        let prev_cap = self.effective_cap.load(Ordering::SeqCst);
+        let new_cap = (prev_cap / 2).max(1);
+        self.effective_cap.store(new_cap, Ordering::SeqCst);
+
+        let target_cooldown = Instant::now() + cooldown_duration;
+        {
+            let mut cd = self.cooldown_until.lock();
+            if target_cooldown > *cd {
+                *cd = target_cooldown;
+            }
+        }
+        warn!(
+            prev_cap,
+            new_cap,
+            cooldown_ms = cooldown_duration.as_millis(),
+            "HTTP 429/503 rate limit: stepped down concurrency cap and activated shared cooldown"
+        );
+        self.notify_slot.notify_waiters();
+    }
+
+    /// Waits until any active cooldown has elapsed and an active connection slot is available under effective_cap.
+    pub async fn acquire_slot(&self, cancel_rx: &mut watch::Receiver<bool>) -> Result<GovernorPermit<'_>, ()> {
+        loop {
+            if *cancel_rx.borrow() {
+                return Err(());
+            }
+
+            // 1. Check cooldown
+            let wait_duration = {
+                let cd = self.cooldown_until.lock();
+                let now = Instant::now();
+                if *cd > now {
+                    Some(*cd - now)
+                } else {
+                    None
+                }
+            };
+
+            if let Some(dur) = wait_duration {
+                tokio::select! {
+                    _ = tokio::time::sleep(dur) => {},
+                    _ = cancel_rx.changed() => {
+                        if *cancel_rx.borrow() { return Err(()); }
+                    }
+                }
+                continue;
+            }
+
+            // 2. Try to claim an active worker slot under effective_cap
+            let cap = self.effective_cap.load(Ordering::SeqCst);
+            let current = self.active_workers.load(Ordering::SeqCst);
+            if current < cap {
+                if self.active_workers.compare_exchange(
+                    current,
+                    current + 1,
+                    Ordering::SeqCst,
+                    Ordering::SeqCst,
+                ).is_ok() {
+                    return Ok(GovernorPermit {
+                        governor: self,
+                    });
+                }
+                continue;
+            }
+
+            // 3. Cap is reached: park and wait for an active worker to finish or cap/cooldown to update
+            tokio::select! {
+                _ = self.notify_slot.notified() => {},
+                _ = cancel_rx.changed() => {
+                    if *cancel_rx.borrow() { return Err(()); }
+                }
+            }
+        }
+    }
+}
+
+pub struct GovernorPermit<'a> {
+    governor: &'a ConcurrencyGovernor,
+}
+
+impl<'a> Drop for GovernorPermit<'a> {
+    fn drop(&mut self) {
+        self.governor.active_workers.fetch_sub(1, Ordering::SeqCst);
+        self.governor.notify_slot.notify_one();
+    }
+}
+
 pub const SEG_STATE_PENDING: u8 = 0;
 pub const SEG_STATE_DOWNLOADING: u8 = 1;
 pub const SEG_STATE_COMPLETED: u8 = 2;
@@ -338,6 +529,7 @@ pub struct WorkerProgressEvent {
     pub current_offset: u64,
     pub is_completed: bool,
     pub error: Option<String>,
+    pub discovered_total_size: Option<u64>,
 }
 
 pub type SpeedLimiter = TokenBucketLimiter;
@@ -356,6 +548,10 @@ pub struct ChunkWorker {
     pub speed_limiter: Option<TokenBucketLimiter>,
     pub cancel_rx: watch::Receiver<bool>,
     pub progress_tx: mpsc::UnboundedSender<WorkerProgressEvent>,
+    pub governor: Arc<ConcurrencyGovernor>,
+    pub total_connections: usize,
+    pub total_size: u64,
+    pub supports_range: bool,
 }
 
 impl ChunkWorker {
@@ -372,6 +568,10 @@ impl ChunkWorker {
         cancel_rx: watch::Receiver<bool>,
         progress_tx: mpsc::UnboundedSender<WorkerProgressEvent>,
         downloaded_bytes: Arc<AtomicU64>,
+        governor: Arc<ConcurrencyGovernor>,
+        total_connections: usize,
+        total_size: u64,
+        supports_range: bool,
     ) -> Self {
         Self {
             segment_id,
@@ -387,11 +587,26 @@ impl ChunkWorker {
             speed_limiter,
             cancel_rx,
             progress_tx,
+            governor,
+            total_connections,
+            total_size,
+            supports_range,
         }
     }
 
-    pub async fn run(self) {
-        let max_retries = 5;
+    pub async fn run(mut self) {
+        // Staggered ramp-up: avoid instant TLS/HTTP connection bursts on CDN / host when connections > 4
+        if self.total_connections > 4 && self.segment_id > 0 {
+            let stagger_ms = (self.segment_id as u64).min(16) * 60;
+            tokio::select! {
+                _ = tokio::time::sleep(Duration::from_millis(stagger_ms)) => {},
+                _ = self.cancel_rx.changed() => {
+                    if *self.cancel_rx.borrow() { return; }
+                }
+            }
+        }
+
+        let max_retries = 10;
         let mut retry_count = 0;
 
         loop {
@@ -399,10 +614,18 @@ impl ChunkWorker {
                 return;
             }
 
+            // If single-stream sequential fallback is active, non-zero segments MUST exit immediately without writing
+            if self.segment_id > 0
+                && (!self.supports_range || self.governor.fallback_single_stream.load(Ordering::SeqCst))
+            {
+                debug!(segment = self.segment_id, "Aborting worker: single-stream sequential fallback active");
+                return;
+            }
+
             let cur = self.current_offset.load(Ordering::SeqCst);
             let end = self.end_byte.load(Ordering::SeqCst);
 
-            if cur > end {
+            if self.total_size > 0 && cur > end {
                 // Segment reached its assigned target
                 self.segment_state.store(SEG_STATE_COMPLETED, Ordering::Release);
                 let _ = self.progress_tx.send(WorkerProgressEvent {
@@ -411,23 +634,36 @@ impl ChunkWorker {
                     current_offset: cur,
                     is_completed: true,
                     error: None,
+                    discovered_total_size: None,
                 });
                 return;
             }
 
-            let range_header = format!("bytes={}-{}", cur, end);
+            // Acquire concurrency slot under effective_cap (parks gracefully if cap stepped down)
+            let permit = match self.governor.acquire_slot(&mut self.cancel_rx).await {
+                Ok(p) => p,
+                Err(_) => return, // cancelled
+            };
+
+            // Non-resumable or unknown-size initial streams MUST NOT send Range header
+            let range_header = if !self.supports_range || (self.total_size == 0 && cur == 0) {
+                None
+            } else {
+                Some(format!("bytes={}-{}", cur, end))
+            };
 
             let resp = match send_request_with_headers(
                 &self.client,
                 reqwest::Method::GET,
                 &self.url,
                 self.headers.as_ref(),
-                Some(&range_header),
+                range_header.as_deref(),
             )
             .await
             {
                 Ok(r) => r,
                 Err(err) => {
+                    drop(permit);
                     retry_count += 1;
                     warn!(segment = self.segment_id, retry = retry_count, "Network dropout on chunk connect: {}", err);
                     if retry_count > max_retries {
@@ -440,16 +676,147 @@ impl ChunkWorker {
                             current_offset: cur,
                             is_completed: false,
                             error: Some(engine_err.to_string()),
+                            discovered_total_size: None,
                         });
                         return;
                     }
-                    tokio::time::sleep(Duration::from_millis(300 * (1 << retry_count))).await;
+                    if !self.supports_range && cur > 0 {
+                        warn!(segment = self.segment_id, "Non-resumable connect retry; resetting file and offset to 0");
+                        let _ = self.shared_file.set_len(0);
+                        let written = self.current_offset.swap(0, Ordering::SeqCst);
+                        if written > 0 {
+                            atomic_saturating_sub(&self.downloaded_bytes, written);
+                        }
+                    }
+                    let backoff = Duration::from_millis(300 * (1 << retry_count.min(4)));
+                    tokio::select! {
+                        _ = tokio::time::sleep(backoff) => {},
+                        _ = self.cancel_rx.changed() => {
+                            if *self.cancel_rx.borrow() { return; }
+                        }
+                    }
                     continue;
                 }
             };
 
             let status = resp.status();
-            if !status.is_success() && status != reqwest::StatusCode::PARTIAL_CONTENT {
+
+            // 1. Handle HTTP 429 Too Many Requests & 503 Service Unavailable gracefully without killing healthy workers
+            if status == reqwest::StatusCode::TOO_MANY_REQUESTS
+                || status == reqwest::StatusCode::SERVICE_UNAVAILABLE
+            {
+                let retry_after_secs = resp
+                    .headers()
+                    .get(RETRY_AFTER)
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .unwrap_or_else(|| {
+                        // Jittered exponential backoff: 2s -> 4s -> 8s -> 16s -> 30s
+                        let base = (2u64.saturating_mul(1 << retry_count.min(4))).min(30);
+                        let jitter = (cur % 500) + 100;
+                        base + (jitter / 1000)
+                    })
+                    .clamp(2, 60);
+
+                let backoff_duration = Duration::from_secs(retry_after_secs);
+                self.governor.on_rate_limit(backoff_duration);
+                drop(permit);
+
+                retry_count += 1;
+                warn!(
+                    segment = self.segment_id,
+                    status = %status,
+                    retry = retry_count,
+                    cooldown_secs = retry_after_secs,
+                    "Rate limit encountered; cooling down and stepping down concurrency cap"
+                );
+
+                if retry_count > max_retries {
+                    let engine_err = EngineError::Http {
+                        status: status.as_u16(),
+                        message: format!("Host rate limit exceeded after {} retries: {}", max_retries, self.url),
+                    };
+                    error!(segment = self.segment_id, "{}", engine_err);
+                    self.segment_state.store(SEG_STATE_FAILED, Ordering::Release);
+                    let _ = self.progress_tx.send(WorkerProgressEvent {
+                        segment_id: self.segment_id,
+                        bytes_read: 0,
+                        current_offset: cur,
+                        is_completed: false,
+                        error: Some(engine_err.to_string()),
+                        discovered_total_size: None,
+                    });
+                    return;
+                }
+
+                tokio::select! {
+                    _ = tokio::time::sleep(backoff_duration) => {},
+                    _ = self.cancel_rx.changed() => {
+                        if *self.cancel_rx.borrow() { return; }
+                    }
+                }
+                continue;
+            }
+
+            // Inspect response headers for dynamic size discovery (Content-Length / Content-Range total)
+            let mut discovered_size: Option<u64> = None;
+            if let Some(cl) = resp
+                .headers()
+                .get(reqwest::header::CONTENT_LENGTH)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| s.parse::<u64>().ok())
+            {
+                if cl > 0 && self.total_size == 0 {
+                    self.total_size = cl;
+                    self.end_byte.store(cl - 1, Ordering::SeqCst);
+                    discovered_size = Some(cl);
+                    debug!(
+                        segment = self.segment_id,
+                        total_size = cl,
+                        "Adopted total_size and end_byte from response Content-Length header"
+                    );
+                }
+            }
+
+            // 2. Handle HTTP 200 OK (server ignored Range header or full-stream response)
+            if status == reqwest::StatusCode::OK {
+                if self.segment_id == 0 && cur == 0 {
+                    // Server sent the full resource from byte 0.
+                    if self.total_connections > 1 {
+                        self.governor.fallback_single_stream.store(true, Ordering::SeqCst);
+                        self.governor.notify_slot.notify_waiters();
+                        warn!(
+                            segment = self.segment_id,
+                            "Server returned HTTP 200 OK for Range request. Falling back to single-stream sequential download."
+                        );
+                    }
+                    if self.total_size > 0 {
+                        self.end_byte.store(self.total_size - 1, Ordering::SeqCst);
+                    } else {
+                        self.end_byte.store(u64::MAX.saturating_sub(1), Ordering::SeqCst);
+                    }
+                } else {
+                    // Non-zero segment or resumed offset receiving 200 OK: MUST NOT write byte 0 over offset!
+                    drop(permit);
+                    let engine_err = EngineError::CorruptedStream(format!(
+                        "Server returned HTTP 200 OK for ranged segment {} (offset {}). Refusing to corrupt file with byte 0",
+                        self.segment_id, cur
+                    ));
+                    error!(segment = self.segment_id, "{}", engine_err);
+                    self.segment_state.store(SEG_STATE_FAILED, Ordering::Release);
+                    let _ = self.progress_tx.send(WorkerProgressEvent {
+                        segment_id: self.segment_id,
+                        bytes_read: 0,
+                        current_offset: cur,
+                        is_completed: false,
+                        error: Some(engine_err.to_string()),
+                        discovered_total_size: None,
+                    });
+                    return;
+                }
+            } else if status != reqwest::StatusCode::PARTIAL_CONTENT {
+                // Unexpected HTTP status
+                drop(permit);
                 let is_fatal_auth = matches!(
                     status,
                     reqwest::StatusCode::UNAUTHORIZED
@@ -472,11 +839,61 @@ impl ChunkWorker {
                         current_offset: cur,
                         is_completed: false,
                         error: Some(engine_err.to_string()),
+                        discovered_total_size: None,
                     });
                     return;
                 }
-                tokio::time::sleep(Duration::from_millis(500)).await;
+                tokio::select! {
+                    _ = tokio::time::sleep(Duration::from_millis(500)) => {},
+                    _ = self.cancel_rx.changed() => {
+                        if *self.cancel_rx.borrow() { return; }
+                    }
+                }
                 continue;
+            } else {
+                // Status is 206 Partial Content: strictly verify Content-Range start matches requested cur
+                if let Some(cr_val) = resp.headers().get(CONTENT_RANGE).and_then(|v| v.to_str().ok()) {
+                    if let Some(cr) = parse_content_range(cr_val) {
+                        if cr.start != cur {
+                            drop(permit);
+                            let engine_err = EngineError::CorruptedStream(format!(
+                                "Content-Range start mismatch on segment {}: requested start {}, server returned {}",
+                                self.segment_id, cur, cr.start
+                            ));
+                            error!(segment = self.segment_id, "{}", engine_err);
+                            self.segment_state.store(SEG_STATE_FAILED, Ordering::Release);
+                            let _ = self.progress_tx.send(WorkerProgressEvent {
+                                segment_id: self.segment_id,
+                                bytes_read: 0,
+                                current_offset: cur,
+                                is_completed: false,
+                                error: Some(engine_err.to_string()),
+                                discovered_total_size: None,
+                            });
+                            return;
+                        }
+                        if self.total_size == 0 {
+                            if let Some(tot) = cr.total {
+                                if tot > 0 {
+                                    self.total_size = tot;
+                                    self.end_byte.store(tot - 1, Ordering::SeqCst);
+                                    discovered_size = Some(tot);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let Some(discovered) = discovered_size {
+                let _ = self.progress_tx.send(WorkerProgressEvent {
+                    segment_id: self.segment_id,
+                    bytes_read: 0,
+                    current_offset: cur,
+                    is_completed: false,
+                    error: None,
+                    discovered_total_size: Some(discovered),
+                });
             }
 
             debug!(segment = self.segment_id, offset = cur, end = end, "Range request connected cleanly");
@@ -507,6 +924,7 @@ impl ChunkWorker {
                                 current_offset: self.current_offset.load(Ordering::SeqCst),
                                 is_completed: false,
                                 error: Some(engine_err.to_string()),
+                                discovered_total_size: None,
                             });
                             return;
                         }
@@ -519,12 +937,20 @@ impl ChunkWorker {
                     continue;
                 }
 
-                let write_offset = self.current_offset.load(Ordering::SeqCst);
-                let current_limit_end = self.end_byte.load(Ordering::Relaxed);
+                // Reset retry count upon successfully receiving bytes
+                retry_count = 0;
 
-                // If chunk would overshoot the dynamically updated segment boundary, truncate it
-                let effective_len = if write_offset + chunk_len as u64 > current_limit_end + 1 {
-                    (current_limit_end + 1).saturating_sub(write_offset) as usize
+                let write_offset = self.current_offset.load(Ordering::SeqCst);
+                let current_limit_end = self.end_byte.load(Ordering::SeqCst);
+
+                let limit_plus_one = current_limit_end.saturating_add(1);
+                if write_offset >= limit_plus_one {
+                    break;
+                }
+
+                // Strictly clamp write so a worker NEVER overshoots current_limit_end
+                let effective_len = if write_offset.saturating_add(chunk_len as u64) > limit_plus_one {
+                    limit_plus_one.saturating_sub(write_offset) as usize
                 } else {
                     chunk_len
                 };
@@ -533,52 +959,33 @@ impl ChunkWorker {
                     break;
                 }
 
-                // Token-bucket rate limiting before or after writing
+                // Token-bucket rate limiting before writing
                 if let Some(limiter) = &self.speed_limiter {
                     limiter.acquire(effective_len).await;
                 }
 
-                // Direct file write at exact offset
-                #[cfg(windows)]
-                {
-                    use std::os::windows::fs::FileExt;
-                    if let Err(io_err) = self.shared_file.seek_write(&chunk[..effective_len], write_offset) {
-                        self.segment_state.store(SEG_STATE_FAILED, Ordering::Release);
-                        let _ = self.progress_tx.send(WorkerProgressEvent {
-                            segment_id: self.segment_id,
-                            bytes_read: 0,
-                            current_offset: write_offset,
-                            is_completed: false,
-                            error: Some(format!("Disk write error: {}", io_err)),
-                        });
-                        return;
-                    }
-                }
-
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::FileExt;
-                    if let Err(io_err) = self.shared_file.write_at(&chunk[..effective_len], write_offset) {
-                        self.segment_state.store(SEG_STATE_FAILED, Ordering::Release);
-                        let _ = self.progress_tx.send(WorkerProgressEvent {
-                            segment_id: self.segment_id,
-                            bytes_read: 0,
-                            current_offset: write_offset,
-                            is_completed: false,
-                            error: Some(format!("Disk write error: {}", io_err)),
-                        });
-                        return;
-                    }
+                // Atomic positional file write: guarantees 100% of buffer is written with zero partial write gaps
+                if let Err(io_err) = write_all_at(&self.shared_file, &chunk[..effective_len], write_offset) {
+                    self.segment_state.store(SEG_STATE_FAILED, Ordering::Release);
+                    let _ = self.progress_tx.send(WorkerProgressEvent {
+                        segment_id: self.segment_id,
+                        bytes_read: 0,
+                        current_offset: write_offset,
+                        is_completed: false,
+                        error: Some(format!("Disk write error: {}", io_err)),
+                        discovered_total_size: None,
+                    });
+                    return;
                 }
 
                 let new_offset = write_offset + effective_len as u64;
-                self.current_offset.store(new_offset, Ordering::Release);
-                // Lock-free atomic progress accounting; speed/ETA are sampled periodically on the 200 ms telemetry clock.
+                self.current_offset.store(new_offset, Ordering::SeqCst);
                 self.downloaded_bytes
                     .fetch_add(effective_len as u64, Ordering::Relaxed);
 
                 let is_done = new_offset > current_limit_end;
                 if is_done {
+                    drop(permit);
                     self.segment_state.store(SEG_STATE_COMPLETED, Ordering::Release);
                     let _ = self.progress_tx.send(WorkerProgressEvent {
                         segment_id: self.segment_id,
@@ -586,15 +993,36 @@ impl ChunkWorker {
                         current_offset: new_offset,
                         is_completed: true,
                         error: None,
+                        discovered_total_size: None,
                     });
                     return;
                 }
             }
 
+            drop(permit);
+
             if !stream_failed {
                 let final_offset = self.current_offset.load(Ordering::SeqCst);
                 let target_end = self.end_byte.load(Ordering::SeqCst);
-                if final_offset > target_end {
+
+                // If stream reached normal EOF without error:
+                // 1. For ranged downloads, final_offset > target_end indicates full segment completion.
+                // 2. For non-ranged or unknown-size streams (or single-stream fallback), clean EOF with bytes written indicates full file completion.
+                let is_stream_completed = if final_offset > target_end {
+                    true
+                } else if (!self.supports_range
+                    || self.total_size == 0
+                    || self.governor.fallback_single_stream.load(Ordering::SeqCst))
+                    && self.segment_id == 0
+                {
+                    final_offset > self.start_byte
+                } else {
+                    false
+                };
+
+                if is_stream_completed {
+                    let completed_end = final_offset.saturating_sub(1);
+                    self.end_byte.store(completed_end, Ordering::SeqCst);
                     self.segment_state.store(SEG_STATE_COMPLETED, Ordering::Release);
                     let _ = self.progress_tx.send(WorkerProgressEvent {
                         segment_id: self.segment_id,
@@ -602,17 +1030,18 @@ impl ChunkWorker {
                         current_offset: final_offset,
                         is_completed: true,
                         error: None,
+                        discovered_total_size: Some(final_offset),
                     });
                     return;
                 }
 
-                // Premature EOF before covering segment range
+                // Premature EOF before covering segment range: retry remaining range
                 retry_count += 1;
                 warn!(segment = self.segment_id, retry = retry_count, offset = final_offset, target = target_end, "Premature EOF received; retrying range");
                 if retry_count > max_retries {
                     let err = EngineError::CorruptedStream(format!(
-                        "Premature EOF at offset {} (expected {})",
-                        final_offset, target_end
+                        "Premature EOF at offset {} (expected {}) after {} retries",
+                        final_offset, target_end, max_retries
                     ));
                     error!(segment = self.segment_id, "{}", err);
                     self.segment_state.store(SEG_STATE_FAILED, Ordering::Release);
@@ -622,12 +1051,29 @@ impl ChunkWorker {
                         current_offset: final_offset,
                         is_completed: false,
                         error: Some(err.to_string()),
+                        discovered_total_size: None,
                     });
                     return;
                 }
+            } else {
+                // If a non-resumable single-stream download experienced a stream failure mid-transfer,
+                // we cannot resume via Range. Reset offset to 0, truncate the file, and restart full GET.
+                if !self.supports_range || self.governor.fallback_single_stream.load(Ordering::SeqCst) {
+                    warn!(segment = self.segment_id, "Non-resumable stream failed mid-transfer; resetting file and offset to 0 for full restart");
+                    let _ = self.shared_file.set_len(0);
+                    let written = self.current_offset.swap(0, Ordering::SeqCst);
+                    if written > 0 {
+                        atomic_saturating_sub(&self.downloaded_bytes, written);
+                    }
+                }
             }
 
-            tokio::time::sleep(Duration::from_millis(300)).await;
+            tokio::select! {
+                _ = tokio::time::sleep(Duration::from_millis(300)) => {},
+                _ = self.cancel_rx.changed() => {
+                    if *self.cancel_rx.borrow() { return; }
+                }
+            }
         }
     }
 }
@@ -639,6 +1085,43 @@ mod tests {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
     use uuid::Uuid;
+
+    #[test]
+    fn test_parse_content_range_valid_and_invalid() {
+        let cr = parse_content_range("bytes 0-1023/2048").unwrap();
+        assert_eq!(cr.start, 0);
+        assert_eq!(cr.end, 1023);
+        assert_eq!(cr.total, Some(2048));
+
+        let cr_star = parse_content_range("bytes 500-999/*").unwrap();
+        assert_eq!(cr_star.start, 500);
+        assert_eq!(cr_star.end, 999);
+        assert_eq!(cr_star.total, None);
+
+        assert!(parse_content_range("invalid").is_none());
+        assert!(parse_content_range("bytes -10/20").is_none());
+    }
+
+    #[test]
+    fn test_concurrency_governor_step_down() {
+        let gov = ConcurrencyGovernor::new(16);
+        assert_eq!(gov.effective_cap.load(Ordering::SeqCst), 16);
+
+        gov.on_rate_limit(Duration::from_secs(2));
+        assert_eq!(gov.effective_cap.load(Ordering::SeqCst), 8);
+
+        gov.on_rate_limit(Duration::from_secs(2));
+        assert_eq!(gov.effective_cap.load(Ordering::SeqCst), 4);
+
+        gov.on_rate_limit(Duration::from_secs(2));
+        assert_eq!(gov.effective_cap.load(Ordering::SeqCst), 2);
+
+        gov.on_rate_limit(Duration::from_secs(2));
+        assert_eq!(gov.effective_cap.load(Ordering::SeqCst), 1);
+
+        gov.on_rate_limit(Duration::from_secs(2));
+        assert_eq!(gov.effective_cap.load(Ordering::SeqCst), 1);
+    }
 
     #[test]
     fn test_normalize_googlevideo_headers_defaults_and_dedup() {
@@ -788,6 +1271,7 @@ mod tests {
         hdrs.insert("Origin".to_string(), "https://www.youtube.com".to_string());
         hdrs.insert("Cookie".to_string(), "__Secure-1PSID=tok123".to_string());
 
+        let governor = ConcurrencyGovernor::new(1);
         let worker = ChunkWorker::new(
             0,
             0,
@@ -801,6 +1285,10 @@ mod tests {
             cancel_rx,
             prog_tx,
             Arc::clone(&downloaded_bytes),
+            governor,
+            1,
+            payload.len() as u64,
+            true,
         );
         worker.run().await;
 
@@ -820,6 +1308,69 @@ mod tests {
 
         let _ = std::fs::remove_file(&temp_file);
     }
+
+    #[tokio::test]
+    async fn test_chunk_worker_unknown_size_non_ranged_stream_completes_cleanly() {
+        let payload = b"UNKNOWN_SIZE_STREAM_CONTENT_BYTES_987654321";
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        tokio::spawn(async move {
+            if let Ok((mut sock, _)) = listener.accept().await {
+                let mut buf = [0u8; 4096];
+                let _ = sock.read(&mut buf).await;
+                // DaFont style: 200 OK, no Accept-Ranges, no Range support
+                let hdr = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n";
+                let _ = sock.write_all(hdr.as_bytes()).await;
+                let _ = sock.write_all(payload).await;
+                let _ = sock.shutdown().await;
+            }
+        });
+
+        let temp_file = std::env::temp_dir().join(format!("octoheft_cw_unknown_{}.bin", Uuid::new_v4()));
+        let sparse = SparseFile::create_preallocated(&temp_file, 0).unwrap();
+        let shared = sparse.get_arc_handle();
+        let (_cancel_tx, cancel_rx) = watch::channel(false);
+        let (prog_tx, mut prog_rx) = mpsc::unbounded_channel();
+        let downloaded_bytes = Arc::new(AtomicU64::new(0));
+
+        let governor = ConcurrencyGovernor::new(1);
+        let worker = ChunkWorker::new(
+            0,
+            0,
+            0,
+            0,
+            format!("http://127.0.0.1:{}/download", port),
+            reqwest::Client::new(),
+            None,
+            shared,
+            None,
+            cancel_rx,
+            prog_tx,
+            Arc::clone(&downloaded_bytes),
+            governor,
+            1,
+            0,
+            false,
+        );
+        worker.run().await;
+
+        let mut completed = false;
+        let mut final_size: Option<u64> = None;
+        while let Ok(ev) = prog_rx.try_recv() {
+            assert!(ev.error.is_none(), "Unexpected worker error: {:?}", ev.error);
+            if ev.is_completed {
+                completed = true;
+            }
+            if let Some(sz) = ev.discovered_total_size {
+                final_size = Some(sz);
+            }
+        }
+        assert!(completed, "ChunkWorker must complete cleanly on unknown-size non-ranged stream");
+        assert_eq!(final_size, Some(payload.len() as u64));
+        assert_eq!(downloaded_bytes.load(Ordering::Relaxed), payload.len() as u64);
+        assert_eq!(&std::fs::read(&temp_file).unwrap()[..], payload);
+
+        let _ = std::fs::remove_file(&temp_file);
+    }
 }
-
-
