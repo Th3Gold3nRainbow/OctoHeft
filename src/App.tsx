@@ -170,7 +170,11 @@ export const App: React.FC = () => {
     try {
       const s = await invoke<AppSettings>('get_app_settings');
       if (s && typeof s === 'object') {
-        setAppSettings((prev) => ({ ...prev, ...s }));
+        setAppSettings((prev) => ({
+          ...prev,
+          ...s,
+          use_category_subfolders: s.use_category_subfolders ?? prev.use_category_subfolders ?? true,
+        }));
         if (typeof s.clipboard_monitor_enabled === 'boolean') {
           setClipboardMonitorActive(s.clipboard_monitor_enabled);
         }
@@ -344,7 +348,11 @@ export const App: React.FC = () => {
 
     listen<AppSettings>('settings-updated', (event) => {
       if (event.payload) {
-        setAppSettings((prev) => ({ ...prev, ...event.payload }));
+        setAppSettings((prev) => ({
+          ...prev,
+          ...event.payload,
+          use_category_subfolders: event.payload.use_category_subfolders ?? prev.use_category_subfolders ?? true,
+        }));
         if (typeof event.payload.clipboard_monitor_enabled === 'boolean') {
           setClipboardMonitorActive(event.payload.clipboard_monitor_enabled);
         }
@@ -848,6 +856,7 @@ export const App: React.FC = () => {
         initialFileName={prefillFileName}
         defaultDownloadDir={appSettings.default_download_dir}
         defaultConnections={appSettings.max_connections_per_download || 8}
+        useCategorySubfolders={appSettings.use_category_subfolders}
         capturedFromClipboard={prefillFromClipboard}
         isMediaUrl={prefillIsMedia}
         onClose={() => {

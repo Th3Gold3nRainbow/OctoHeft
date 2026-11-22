@@ -36,7 +36,7 @@ pub struct DownloadEngine {
     active_controls: RwLock<HashMap<String, ActiveTaskControl>>,
     pub global_speed_limiter: SpeedLimiter,
     default_connections: AtomicUsize,
-    default_download_dir: PathBuf,
+    default_download_dir: RwLock<PathBuf>,
 }
 
 impl DownloadEngine {
@@ -62,7 +62,7 @@ impl DownloadEngine {
             active_controls: RwLock::new(HashMap::new()),
             global_speed_limiter,
             default_connections: AtomicUsize::new(8),
-            default_download_dir,
+            default_download_dir: RwLock::new(default_download_dir),
         }
     }
 
@@ -77,6 +77,10 @@ impl DownloadEngine {
     pub fn set_default_connections(&self, conns: usize) {
         let clamped = conns.clamp(1, 16);
         self.default_connections.store(clamped, Ordering::Relaxed);
+    }
+
+    pub fn set_default_download_dir(&self, dir: PathBuf) {
+        *self.default_download_dir.write() = dir;
     }
 
     /// Add a new download task and probe remote server headers
@@ -117,11 +121,14 @@ impl DownloadEngine {
             .save_path
             .map(PathBuf::from)
             .unwrap_or_else(|| {
-                let routed = self.category_dispatcher.resolve_destination_dir(&category);
+                let routed = self.category_dispatcher.resolve_destination_dir_with_override(
+                    &category,
+                    req.use_category_subfolders,
+                );
                 if routed.exists() {
                     routed
                 } else {
-                    self.default_download_dir.clone()
+                    self.default_download_dir.read().clone()
                 }
             });
         let save_file_path = save_dir.join(&file_name);

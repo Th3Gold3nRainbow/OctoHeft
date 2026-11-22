@@ -18,6 +18,7 @@ interface AddDownloadModalProps {
   initialFileName?: string;
   defaultDownloadDir?: string;
   defaultConnections?: number;
+  useCategorySubfolders?: boolean;
   capturedFromClipboard?: boolean;
   isMediaUrl?: boolean;
   onClose: () => void;
@@ -27,12 +28,37 @@ interface AddDownloadModalProps {
   onOpenInOctoMedia?: (url: string) => void;
 }
 
+function inferCategorySubfolder(targetUrl: string, targetFileName: string): string {
+  const target = (targetFileName || targetUrl || '').split('?')[0].split('#')[0];
+  const lastDot = target.lastIndexOf('.');
+  if (lastDot === -1 || lastDot === target.length - 1) return '';
+  const ext = target.slice(lastDot + 1).toLowerCase();
+
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'iso', 'img', 'z', 'tgz', 'cab'].includes(ext)) {
+    return 'Compressed';
+  }
+  if (['exe', 'msi', 'apk', 'bin', 'dmg', 'deb', 'rpm', 'appimage', 'bat', 'cmd', 'ps1'].includes(ext)) {
+    return 'Programs';
+  }
+  if (['mp4', 'mkv', 'avi', 'mov', 'webm', 'flv', 'wmv', 'm4v', '3gp', 'ts', 'm2ts', 'm3u8', 'mpd'].includes(ext)) {
+    return 'Video';
+  }
+  if (['mp3', 'flac', 'wav', 'aac', 'ogg', 'm4a', 'wma', 'opus', 'aiff'].includes(ext)) {
+    return 'Audio';
+  }
+  if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'epub', 'csv', 'rtf'].includes(ext)) {
+    return 'Documents';
+  }
+  return '';
+}
+
 export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   isOpen,
   initialUrl,
   initialFileName,
   defaultDownloadDir,
   defaultConnections = 8,
+  useCategorySubfolders = true,
   capturedFromClipboard = false,
   isMediaUrl = false,
   onClose,
@@ -45,6 +71,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [url, setUrl] = useState('');
   const [fileName, setFileName] = useState('');
   const [connections, setConnections] = useState(defaultConnections);
+  const [overrideCategorySubfolder, setOverrideCategorySubfolder] =
+    useState<boolean>(useCategorySubfolders);
   const [startImmediately, setStartImmediately] = useState(true);
 
   useEffect(() => {
@@ -56,11 +84,12 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         setFileName(initialFileName);
       }
       setConnections(defaultConnections);
+      setOverrideCategorySubfolder(useCategorySubfolders);
     } else {
       setUrl('');
       setFileName('');
     }
-  }, [isOpen, initialUrl, initialFileName, defaultConnections]);
+  }, [isOpen, initialUrl, initialFileName, defaultConnections, useCategorySubfolders]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -82,6 +111,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         url: url.trim(),
         file_name: fileName.trim() || undefined,
         connections,
+        use_category_subfolders: overrideCategorySubfolder,
       },
       startImmediately
     );
@@ -101,6 +131,18 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       /(?:youtube\.com|youtu\.be|vimeo\.com|twitch\.tv|dailymotion\.com|tiktok\.com)/i.test(
         url.trim()
       ));
+
+  const previewTargetDir = React.useMemo(() => {
+    if (!defaultDownloadDir || !defaultDownloadDir.trim()) return '';
+    const cleanBase = defaultDownloadDir.trim().replace(/[\\/]+$/, '');
+    if (!overrideCategorySubfolder) {
+      return cleanBase;
+    }
+    const sub = inferCategorySubfolder(url, fileName);
+    if (!sub) return cleanBase;
+    const sep = cleanBase.includes('/') && !cleanBase.includes('\\') ? '/' : '\\';
+    return `${cleanBase}${sep}${sub}`;
+  }, [defaultDownloadDir, overrideCategorySubfolder, url, fileName]);
 
   return (
     <div
@@ -218,15 +260,52 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
             )}
           </div>
 
-          {defaultDownloadDir && defaultDownloadDir.trim() && (
-            <div className="octoheft-subcard flex items-center gap-2 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300">
-              <Folder className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-              <span className="font-semibold text-slate-700 dark:text-slate-200 shrink-0">
-                {t('addModal.saveDirLabel')}:
-              </span>
-              <code className="font-mono text-slate-700 dark:text-slate-200 truncate" dir="ltr" title={defaultDownloadDir}>
-                {defaultDownloadDir}
-              </code>
+          {previewTargetDir && (
+            <div className="space-y-1.5">
+              <div className="octoheft-subcard flex items-center gap-2 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300">
+                <Folder className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                <span className="font-semibold text-slate-700 dark:text-slate-200 shrink-0">
+                  {t('addModal.saveDirLabel')}:
+                </span>
+                <code className="font-mono text-slate-700 dark:text-slate-200 truncate" dir="ltr" title={previewTargetDir}>
+                  {previewTargetDir}
+                </code>
+              </div>
+
+              {/* Per-download Category Subfolder Override */}
+              <div className="flex items-center justify-between px-1 text-xs">
+                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                  {t('addModal.routingLabel')}
+                </span>
+                <div
+                  role="group"
+                  aria-label={t('addModal.routingLabel')}
+                  className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800/90 p-0.5 border border-slate-200 dark:border-slate-700/80 text-[11px]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOverrideCategorySubfolder(false)}
+                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                      !overrideCategorySubfolder
+                        ? 'bg-white dark:bg-slate-700 text-sky-700 dark:text-cyan-300 shadow-sm font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {t('addModal.routingDirect')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOverrideCategorySubfolder(true)}
+                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                      overrideCategorySubfolder
+                        ? 'bg-white dark:bg-slate-700 text-sky-700 dark:text-cyan-300 shadow-sm font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {t('addModal.routingSubfolder')}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

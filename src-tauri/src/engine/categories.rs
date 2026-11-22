@@ -227,26 +227,39 @@ impl CategoryDispatcher {
 
     /// Resolve destination directory for a given category, ensuring directory exists
     pub fn resolve_destination_dir(&self, category: &DownloadCategory) -> PathBuf {
-        let base_dir = self.base_download_dir.read().clone();
-        let use_subfolders = *self.use_subfolders.read();
-        let map = self.routes.read();
+        self.resolve_destination_dir_with_override(category, None)
+    }
 
-        let target_path = if let Some(cfg) = map.get(category) {
-            if let Some(ref custom) = cfg.custom_path {
-                if !custom.trim().is_empty() {
-                    PathBuf::from(custom)
-                } else if use_subfolders && !cfg.relative_path.is_empty() {
+    /// Resolve destination directory with optional per-download category subfolder override
+    pub fn resolve_destination_dir_with_override(
+        &self,
+        category: &DownloadCategory,
+        subfolder_override: Option<bool>,
+    ) -> PathBuf {
+        let base_dir = self.base_download_dir.read().clone();
+        let use_subfolders = subfolder_override.unwrap_or_else(|| *self.use_subfolders.read());
+
+        let target_path = if !use_subfolders {
+            base_dir
+        } else {
+            let map = self.routes.read();
+            if let Some(cfg) = map.get(category) {
+                if let Some(ref custom) = cfg.custom_path {
+                    if !custom.trim().is_empty() {
+                        PathBuf::from(custom)
+                    } else if !cfg.relative_path.is_empty() {
+                        base_dir.join(&cfg.relative_path)
+                    } else {
+                        base_dir.clone()
+                    }
+                } else if !cfg.relative_path.is_empty() {
                     base_dir.join(&cfg.relative_path)
                 } else {
                     base_dir.clone()
                 }
-            } else if use_subfolders && !cfg.relative_path.is_empty() {
-                base_dir.join(&cfg.relative_path)
             } else {
                 base_dir.clone()
             }
-        } else {
-            base_dir.clone()
         };
 
         let _ = fs::create_dir_all(&target_path);

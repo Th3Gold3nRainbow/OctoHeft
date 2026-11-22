@@ -141,6 +141,8 @@ pub struct AddDownloadRequest {
     pub connections: Option<usize>,
     #[serde(default)]
     pub headers: Option<HashMap<String, String>>,
+    #[serde(default, alias = "organize_by_category", alias = "create_category_subfolders")]
+    pub use_category_subfolders: Option<bool>,
 }
 
 #[cfg(test)]

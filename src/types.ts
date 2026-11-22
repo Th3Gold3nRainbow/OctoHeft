@@ -141,6 +141,7 @@ export interface AddDownloadRequest {
   save_path?: string;
   file_name?: string;
   connections?: number;
+  use_category_subfolders?: boolean;
 }
 
 export type PostDownloadAction = 'none' | 'exitapp' | 'sleeppc' | 'shutdownpc';

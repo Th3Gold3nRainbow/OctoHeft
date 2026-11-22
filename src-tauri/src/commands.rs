@@ -197,6 +197,7 @@ pub async fn add_batch_downloads(
             file_name: None,
             connections: None,
             headers: None,
+            use_category_subfolders: None,
         };
 
         let start_this = start_immediately && queue_id.is_none();
@@ -646,6 +647,7 @@ pub fn save_app_settings(
 ) -> Result<AppSettings, String> {
     let saved = settings_store.save(&settings)?;
     engine.set_default_connections(saved.max_connections_per_download as usize);
+    engine.set_default_download_dir(PathBuf::from(&saved.default_download_dir));
     write_registry_language(&saved.language);
     crate::tray::update_tray_language(&app, &saved.language);
     dispatcher.apply_folder_settings(

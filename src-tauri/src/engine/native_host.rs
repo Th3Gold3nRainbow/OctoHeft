@@ -1334,6 +1334,7 @@ async fn handle_live_pipe_request(
         file_name: sanitized_file_name,
         connections: None,
         headers: headers.clone(),
+        use_category_subfolders: None,
     };
 
     match engine

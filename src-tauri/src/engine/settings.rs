@@ -54,7 +54,7 @@ pub struct AppSettings {
     pub sound_on_complete: bool,
     #[serde(default = "default_download_dir_string")]
     pub default_download_dir: String,
-    #[serde(default = "default_true")]
+    #[serde(default = "default_true", alias = "organize_by_category", alias = "create_category_subfolders")]
     pub use_category_subfolders: bool,
     #[serde(default)]
     pub clipboard_monitor_enabled: bool,
