@@ -194,7 +194,7 @@ A lock-free token bucket rate limiter enables global and per-download speed thro
 
 ### Option A: Pre-Built Windows Binaries (Recommended)
 
-1. Navigate to the [Releases](https://github.com/Twix/OctoHeft/releases) page.
+1. Navigate to the [Releases]([https://github.com/Twix/OctoHeft/releases](https://github.com/Th3Gold3nRainbow/OctoHeft/releases)) page.
 2. Select your preferred distribution:
    - **NSIS Setup Installer** (`OctoHeft_2.0.1_x64-setup.exe`): Full multi-language setup wizard, auto-registers native messaging manifests, URI schemes, and shell context menus.
    - **Portable Standalone Executable** (`OctoHeft.exe`): Single executable footprint (< 5 MiB). Place `portable.flag` or a `./data` directory alongside the binary to store all settings and logs locally.
