@@ -506,7 +506,7 @@ export const DownloadTable: React.FC<DownloadTableProps> = ({
                   data-col="eta"
                   className="py-2.5 px-2 whitespace-nowrap font-mono tabular-nums text-slate-600 dark:text-slate-300 text-end align-middle"
                 >
-                  <span>{task.status === 'downloading' ? formatEta(task.eta_seconds) : '--'}</span>
+                  <span className="tabular-nums">{task.status === 'downloading' ? formatEta(task.eta_seconds) : '--'}</span>
                 </td>
 
                 {/* Status */}

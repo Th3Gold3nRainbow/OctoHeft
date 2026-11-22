@@ -377,7 +377,7 @@ export const DownloadDetailModal: React.FC<DownloadDetailModalProps> = ({
                   <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
                     {t('detailModal.timeRemaining')}
                   </span>
-                  <span className="text-sm font-bold font-mono text-slate-900 dark:text-slate-100 mt-0.5 block">
+                  <span className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100 mt-0.5 block">
                     {isCompleted ? '0s' : formatEta(task.eta_seconds)}
                   </span>
                 </div>

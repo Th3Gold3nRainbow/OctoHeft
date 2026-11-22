@@ -24,7 +24,7 @@ const MEDIA_EXT_REGEX = /\.(mp4|mkv|webm|m3u8|mpd|ts|flv|avi|mov|mp3|aac|flac|wa
 const DEFAULT_IDM_EXTENSIONS = [
   "3GP", "7Z", "AAC", "ACE", "AIF", "APK", "ARJ", "ASF", "AVI", "BIN", "BZ2",
   "EXE", "GZ", "GZIP", "IMG", "ISO", "LZH", "M4A", "M4V", "MKV", "MOV", "MP3",
-  "MP4", "MPA", "MPE", "MPEG", "MPG", "MSI", "MSU", "OGG", "OGV", "PLJ", "PPS",
+  "MP4", "MPA", "MPE", "MPEG", "MPG", "MSI", "MSU", "OGG", "OGV", "PDF", "PLJ", "PPS",
   "PPT", "QT", "R0*", "R1*", "RA", "RAR", "RM", "RMVB", "SEA", "SIT", "SITX",
   "TAR", "TIF", "TIFF", "WAV", "WMA", "WMV", "Z", "ZIP", "PKG"
 ];

@@ -1,6 +1,6 @@
 [package]
 name = "octoheft"
-version = "2.0.1"
+version = "2.0.2"
 description = "OctoHeft High-Speed Download Accelerator"
 authors = ["OctoHeft Software"]
 license = "MIT"

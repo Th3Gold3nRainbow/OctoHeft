@@ -944,7 +944,7 @@ export const VideoDownloaderAddon: React.FC<VideoDownloaderAddonProps> = ({
                         </span>
                         {isRunning && <span className="tabular-nums">{formatSpeed(tk.speed, language)}</span>}
                         {isRunning && tk.eta_seconds !== null && (
-                          <span>{formatEta(tk.eta_seconds)}</span>
+                          <span className="tabular-nums">{formatEta(tk.eta_seconds)}</span>
                         )}
                       </div>
                     </div>

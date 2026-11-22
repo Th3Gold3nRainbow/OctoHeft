@@ -302,6 +302,8 @@
   "settings.browseFolder": "Обзор...",
   "settings.useSubfolders": "Сортировать загрузки по папкам категорий",
   "settings.useSubfoldersDesc": "При включении файлы распределяются по подпапкам категорий (например, Видео, Архивы). При отключении файлы сохраняются прямо в выбранную папку без создания подпапок.",
+  "settings.askBeforeDownload": "Всегда спрашивать, куда сохранять перед скачиванием",
+  "settings.askBeforeDownloadDesc": "Когда включено, для каждой загрузки сначала открывается диалоговое окно, позволяя выбрать папку назначения и маршрутизацию перед запуском.",
   "settings.browserTitle": "Интеграция браузера и Native Messaging Host",
   "settings.browserSubtitle": "Связывает Google Chrome, Microsoft Edge, Brave и Firefox с OctoHeft.exe",
   "settings.browserWizardBtn": "Мастер активации",

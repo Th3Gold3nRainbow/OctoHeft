@@ -73,6 +73,17 @@ pub struct NativeMessageRequest {
     pub audio_bitrate: Option<u32>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadPromptPayload {
+    pub url: String,
+    pub filename: Option<String>,
+    pub headers: Option<HashMap<String, String>>,
+    pub cookies: Option<String>,
+    pub referrer: Option<String>,
+    pub user_agent: Option<String>,
+    pub total_bytes: Option<u64>,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct SplitMediaMetadata {
     pub quality_label: Option<String>,
@@ -1328,6 +1339,44 @@ async fn handle_live_pipe_request(
 
     let start_now = req.start_immediately.unwrap_or(true);
     let sanitized_file_name = sanitize_filename(requested_name);
+
+    let s = settings_store.load_or_init();
+    if s.ask_before_download {
+        let suggested_name = sanitized_file_name.clone().or_else(|| {
+            Some(derive_filename(&primary_url, requested_name, false))
+        });
+        let prompt_payload = DownloadPromptPayload {
+            url: primary_url.clone(),
+            filename: suggested_name.clone(),
+            headers: headers.clone(),
+            cookies: req.cookies.clone(),
+            referrer: req.referrer.clone(),
+            user_agent: req.user_agent.clone(),
+            total_bytes: req.total_bytes,
+        };
+
+        if let Some(w) = app.get_webview_window("main") {
+            let _ = w.unminimize();
+            let _ = w.show();
+            let _ = w.set_focus();
+        }
+
+        let _ = app.emit("download://prompt-new", &prompt_payload);
+
+        info!(
+            url = %primary_url,
+            file = ?suggested_name,
+            "Prompted user with New Download modal (ask_before_download enabled)"
+        );
+
+        return NativeMessageResponse {
+            status: "success".to_string(),
+            file_name: suggested_name,
+            delivered: Some("live-ipc-prompt".to_string()),
+            ..Default::default()
+        };
+    }
+
     let add_req = AddDownloadRequest {
         url: primary_url.clone(),
         save_path: None,

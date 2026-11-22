@@ -302,6 +302,8 @@
   "settings.browseFolder": "Durchsuchen...",
   "settings.useSubfolders": "Downloads in Kategorie-Ordner einsortieren",
   "settings.useSubfoldersDesc": "Wenn aktiviert, werden Dateien in Kategorie-Unterordner (z. B. Video, Archive) sortiert. Wenn deaktiviert, werden Dateien direkt im gewählten Ordner ohne Unterordner gespeichert.",
+  "settings.askBeforeDownload": "Vor dem Herunterladen immer nach dem Speicherort fragen",
+  "settings.askBeforeDownloadDesc": "Wenn aktiviert, wird bei jedem Download zuerst das Dialogfenster angezeigt, damit Sie den Zielordner und das Routing vor dem Start wählen können.",
   "settings.browserTitle": "Browser-Integration & Native Messaging Host",
   "settings.browserSubtitle": "Verbindet Chrome, Edge, Brave und Firefox direkt mit OctoHeft.exe",
   "settings.browserWizardBtn": "Aktivierungsassistent",

@@ -573,7 +573,7 @@ impl ChunkWorker {
 
                 let new_offset = write_offset + effective_len as u64;
                 self.current_offset.store(new_offset, Ordering::Release);
-                // Lock-free atomic progress accounting; speed/ETA are sampled periodically on the 500 ms telemetry clock.
+                // Lock-free atomic progress accounting; speed/ETA are sampled periodically on the 200 ms telemetry clock.
                 self.downloaded_bytes
                     .fetch_add(effective_len as u64, Ordering::Relaxed);
 

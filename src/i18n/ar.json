@@ -302,6 +302,8 @@
   "settings.browseFolder": "تصفح...",
   "settings.useSubfolders": "تنظيم التنزيلات في مجلدات حسب الفئة",
   "settings.useSubfoldersDesc": "عند التفعيل، يتم فرز الملفات تلقائيًا في مجلدات فرعية (مثل الفيديو والمضغوطات). عند التعطيل، يتم حفظ الملفات مباشرة في المجلد المحدد دون إنشاء مجلدات فرعية.",
+  "settings.askBeforeDownload": "اسأل دائمًا عن مكان الحفظ قبل التنزيل",
+  "settings.askBeforeDownloadDesc": "عند التفعيل، يتوقف كل تنزيل مؤقتًا عند نافذة التنزيل الجديد أولاً حتى تتمكن من تحديد مجلد الوجهة ونمط الحفظ قبل البدء.",
   "settings.browserTitle": "تكامل المتصفح و Native Messaging Host",
   "settings.browserSubtitle": "يربط Chrome وEdge وBrave وFirefox مباشرة مع OctoHeft.exe",
   "settings.browserWizardBtn": "معالج التفعيل",

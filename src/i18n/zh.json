@@ -302,6 +302,8 @@
   "settings.browseFolder": "浏览...",
   "settings.useSubfolders": "按文件类别归类至子文件夹",
   "settings.useSubfoldersDesc": "开启后，文件将自动归类到对应的类别子文件夹（如视频、压缩包）；关闭后，文件将直接保存在所选下载目录中，不创建任何子文件夹。",
+  "settings.askBeforeDownload": "下载前总是询问保存位置",
+  "settings.askBeforeDownloadDesc": "启用后，每个拦截或触发的下载都会先弹出“新建下载”对话框，以便您在开始前选择目标文件夹和保存方式。",
   "settings.browserTitle": "浏览器集成与 Native Messaging 主机",
   "settings.browserSubtitle": "将 Google Chrome、Microsoft Edge、Brave 与 Firefox 直连至 OctoHeft.exe",
   "settings.browserWizardBtn": "启用向导",

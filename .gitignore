@@ -49,3 +49,5 @@ $RECYCLE.BIN/
 portable.flag
 data/
 logs/
+node_modules
+REA-Prompts/

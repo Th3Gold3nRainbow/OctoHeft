@@ -6,7 +6,7 @@ pub const SUPPORTED_LANGUAGES: [&str; 7] = ["en", "fr", "es", "de", "ar", "ru", 
 
 pub const LEGACY_DEFAULT_INTERCEPT_EXTENSIONS: &str = "3GP 7Z AAC ACE AIF APK ARJ ASF AVI BIN BZ2 EXE GZ GZIP IMG ISO LZH M4A M4V MKV MOV MP3 MP4 MPA MPE MPEG MPG MSI MSU OGG OGV PLJ PPS PPT QT R0* R1* RA RAR RM RMVB SEA SIT SITX TAR TIF TIFF WAV WMA WMV Z ZIP PKG";
 
-pub const DEFAULT_INTERCEPT_EXTENSIONS: &str = "3GP 7Z AAC ACE AIF APK ARJ ASF AVI BIN BZ2 EXE GZ GZIP IMG ISO LZH M4A M4V MKV MOV MP3 MP4 MPA MPE MPEG MPG MSI MSU OGG OGV PLJ PPS PPT QT R0* R1* RA RAR RM RMVB SEA SIT SITX TAR TIF TIFF WAV WMA WMV Z ZIP PKG DAT";
+pub const DEFAULT_INTERCEPT_EXTENSIONS: &str = "3GP 7Z AAC ACE AIF APK ARJ ASF AVI BIN BZ2 EXE GZ GZIP IMG ISO LZH M4A M4V MKV MOV MP3 MP4 MPA MPE MPEG MPG MSI MSU OGG OGV PDF PLJ PPS PPT QT R0* R1* RA RAR RM RMVB SEA SIT SITX TAR TIF TIFF WAV WMA WMV Z ZIP PKG DAT";
 
 fn default_true() -> bool {
     true
@@ -60,6 +60,8 @@ pub struct AppSettings {
     pub clipboard_monitor_enabled: bool,
     #[serde(default = "default_chunks", alias = "parallel_connections", alias = "chunks_per_download")]
     pub max_connections_per_download: u32,
+    #[serde(default, alias = "prompt_download_location", alias = "always_ask_destination")]
+    pub ask_before_download: bool,
 }
 
 impl Default for AppSettings {
@@ -72,6 +74,7 @@ impl Default for AppSettings {
             use_category_subfolders: true,
             clipboard_monitor_enabled: false,
             max_connections_per_download: 8,
+            ask_before_download: false,
         }
     }
 }
@@ -233,6 +236,7 @@ impl SettingsStore {
             use_category_subfolders: settings.use_category_subfolders,
             clipboard_monitor_enabled: settings.clipboard_monitor_enabled,
             max_connections_per_download: connections,
+            ask_before_download: settings.ask_before_download,
         }
     }
 
@@ -281,6 +285,7 @@ impl SettingsStore {
             use_category_subfolders: true,
             clipboard_monitor_enabled: false,
             max_connections_per_download: 8,
+            ask_before_download: false,
         };
         let _ = self.save(&detected);
         detected
@@ -362,6 +367,7 @@ mod tests {
                 use_category_subfolders: false,
                 clipboard_monitor_enabled: true,
                 max_connections_per_download: 12,
+                ask_before_download: true,
             })
             .expect("save failed");
         assert_eq!(saved.language, "ar");
@@ -370,6 +376,7 @@ mod tests {
         assert!(!saved.use_category_subfolders);
         assert!(saved.clipboard_monitor_enabled);
         assert_eq!(saved.max_connections_per_download, 12);
+        assert!(saved.ask_before_download);
 
         let reloaded = store.load_or_init_with_registry_override(None);
         assert_eq!(reloaded.language, "ar");
@@ -378,6 +385,7 @@ mod tests {
         assert!(!reloaded.use_category_subfolders);
         assert!(reloaded.clipboard_monitor_enabled);
         assert_eq!(reloaded.max_connections_per_download, 12);
+        assert!(reloaded.ask_before_download);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

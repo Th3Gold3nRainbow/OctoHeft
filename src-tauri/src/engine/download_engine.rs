@@ -415,7 +415,7 @@ impl DownloadEngine {
         let total_size = task.total_size;
         let mut segments = task.segments.clone();
 
-        // Dedicated fixed-cadence (500 ms / 2 Hz) telemetry orchestrator with EWMA smoothing & hysteresis
+        // Dedicated fixed-cadence (200 ms / 5 Hz) telemetry orchestrator with EWMA smoothing & hysteresis
         spawn_bg(async move {
             let mut speed_tracker = EwmaSpeedTracker::new(initial_downloaded);
             speed_tracker.seed_clock(initial_downloaded, Instant::now());

@@ -141,6 +141,7 @@ export interface AddDownloadRequest {
   save_path?: string;
   file_name?: string;
   connections?: number;
+  headers?: Record<string, string>;
   use_category_subfolders?: boolean;
 }
 
@@ -294,6 +295,17 @@ export interface AppSettings {
   use_category_subfolders: boolean;
   clipboard_monitor_enabled?: boolean;
   max_connections_per_download?: number;
+  ask_before_download?: boolean;
+}
+
+export interface DownloadPromptPayload {
+  url: string;
+  filename?: string | null;
+  headers?: Record<string, string> | null;
+  cookies?: string | null;
+  referrer?: string | null;
+  user_agent?: string | null;
+  total_bytes?: number | null;
 }
 
 export interface ClipboardUrlDetectedPayload {

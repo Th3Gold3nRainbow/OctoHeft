@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AddDownloadRequest } from '../types';
 import {
   X,
@@ -8,14 +8,17 @@ import {
   FolderArchive,
   Film,
   Folder,
+  FolderOpen,
   ClipboardCheck,
 } from 'lucide-react';
 import { useI18n } from '../i18n';
+import { invoke } from '@tauri-apps/api/core';
 
 interface AddDownloadModalProps {
   isOpen: boolean;
   initialUrl?: string;
   initialFileName?: string;
+  initialHeaders?: Record<string, string>;
   defaultDownloadDir?: string;
   defaultConnections?: number;
   useCategorySubfolders?: boolean;
@@ -56,6 +59,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   isOpen,
   initialUrl,
   initialFileName,
+  initialHeaders,
   defaultDownloadDir,
   defaultConnections = 8,
   useCategorySubfolders = true,
@@ -68,12 +72,28 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   onOpenInOctoMedia,
 }) => {
   const { t } = useI18n();
+
+  // 1. All React hooks unconditionally at the very top (strict Rules of Hooks compliance)
   const [url, setUrl] = useState('');
   const [fileName, setFileName] = useState('');
   const [connections, setConnections] = useState(defaultConnections);
   const [overrideCategorySubfolder, setOverrideCategorySubfolder] =
     useState<boolean>(useCategorySubfolders);
+  const [customDownloadDir, setCustomDownloadDir] = useState<string>('');
   const [startImmediately, setStartImmediately] = useState(true);
+
+  const previewTargetDir = useMemo(() => {
+    const baseDir = (customDownloadDir || defaultDownloadDir || '').trim();
+    if (!baseDir) return '';
+    const cleanBase = baseDir.replace(/[\\/]+$/, '');
+    if (!overrideCategorySubfolder) {
+      return cleanBase;
+    }
+    const sub = inferCategorySubfolder(url, fileName);
+    if (!sub) return cleanBase;
+    const sep = cleanBase.includes('/') && !cleanBase.includes('\\') ? '/' : '\\';
+    return `${cleanBase}${sep}${sub}`;
+  }, [customDownloadDir, defaultDownloadDir, overrideCategorySubfolder, url, fileName]);
 
   useEffect(() => {
     if (isOpen) {
@@ -85,11 +105,13 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       }
       setConnections(defaultConnections);
       setOverrideCategorySubfolder(useCategorySubfolders);
+      setCustomDownloadDir(defaultDownloadDir || '');
     } else {
       setUrl('');
       setFileName('');
+      setCustomDownloadDir('');
     }
-  }, [isOpen, initialUrl, initialFileName, defaultConnections, useCategorySubfolders]);
+  }, [isOpen, initialUrl, initialFileName, defaultConnections, useCategorySubfolders, defaultDownloadDir]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -100,11 +122,27 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  const handleBrowseFolder = async () => {
+    try {
+      const picked = await invoke<string | null>('pick_download_folder', {
+        title: t('addModal.saveDirLabel'),
+      });
+      if (picked) {
+        setCustomDownloadDir(picked);
+      }
+    } catch (err) {
+      console.error('Failed to pick folder:', err);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
+
+    const effectiveSaveDir =
+      customDownloadDir && customDownloadDir.trim() !== (defaultDownloadDir || '').trim()
+        ? previewTargetDir
+        : undefined;
 
     onSubmit(
       {
@@ -112,12 +150,15 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         file_name: fileName.trim() || undefined,
         connections,
         use_category_subfolders: overrideCategorySubfolder,
+        headers: initialHeaders,
+        save_path: effectiveSaveDir,
       },
       startImmediately
     );
 
     setUrl('');
     setFileName('');
+    setCustomDownloadDir('');
     onClose();
   };
 
@@ -132,17 +173,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         url.trim()
       ));
 
-  const previewTargetDir = React.useMemo(() => {
-    if (!defaultDownloadDir || !defaultDownloadDir.trim()) return '';
-    const cleanBase = defaultDownloadDir.trim().replace(/[\\/]+$/, '');
-    if (!overrideCategorySubfolder) {
-      return cleanBase;
-    }
-    const sub = inferCategorySubfolder(url, fileName);
-    if (!sub) return cleanBase;
-    const sep = cleanBase.includes('/') && !cleanBase.includes('\\') ? '/' : '\\';
-    return `${cleanBase}${sep}${sub}`;
-  }, [defaultDownloadDir, overrideCategorySubfolder, url, fileName]);
+  // Early return strictly AFTER all hooks have executed
+  if (!isOpen) return null;
 
   return (
     <div
@@ -262,14 +294,26 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
 
           {previewTargetDir && (
             <div className="space-y-1.5">
-              <div className="octoheft-subcard flex items-center gap-2 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300">
-                <Folder className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                <span className="font-semibold text-slate-700 dark:text-slate-200 shrink-0">
-                  {t('addModal.saveDirLabel')}:
-                </span>
-                <code className="font-mono text-slate-700 dark:text-slate-200 truncate" dir="ltr" title={previewTargetDir}>
-                  {previewTargetDir}
-                </code>
+              <div className="flex items-center gap-2">
+                <div className="octoheft-subcard flex-1 flex items-center gap-2 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300 min-w-0">
+                  <Folder className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 shrink-0">
+                    {t('addModal.saveDirLabel')}:
+                  </span>
+                  <code className="font-mono text-slate-700 dark:text-slate-200 truncate" dir="ltr" title={previewTargetDir}>
+                    {previewTargetDir}
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBrowseFolder}
+                  title={t('settings.browseFolder')}
+                  aria-label={t('settings.browseFolder')}
+                  className="octoheft-subcard px-2.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
+                >
+                  <FolderOpen className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>{t('settings.browseFolder')}</span>
+                </button>
               </div>
 
               {/* Per-download Category Subfolder Override */}

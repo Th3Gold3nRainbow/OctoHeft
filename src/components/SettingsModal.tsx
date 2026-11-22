@@ -19,6 +19,7 @@ import {
   Volume2,
   FileType,
   Folder,
+  Download,
 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -46,6 +47,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     default_download_dir: '',
     use_category_subfolders: true,
     max_connections_per_download: 8,
+    ask_before_download: false,
   });
   const [browserReport, setBrowserReport] = useState<BrowserIntegrationReport | null>(null);
   const [browserActionMessage, setBrowserActionMessage] = useState<string | null>(null);
@@ -67,6 +69,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           setDraft({
             ...res,
             use_category_subfolders: res.use_category_subfolders ?? true,
+            ask_before_download: res.ask_before_download ?? false,
           });
         }
       })
@@ -467,6 +470,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       setDraft((prev) => ({
                         ...prev,
                         use_category_subfolders: e.target.checked,
+                      }))
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-500/40 dark:peer-focus:ring-cyan-400/40 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-sky-600 dark:peer-checked:bg-cyan-500" />
+                </div>
+              </label>
+
+              {/* IDM-Style Prompt / Always Ask Where to Save Toggle Card */}
+              <label
+                htmlFor="settings-ask-before-download"
+                className="octoheft-subcard p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+              >
+                <div className="flex-1 min-w-0 pe-2">
+                  <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <Download className="h-4 w-4 text-sky-600 dark:text-cyan-400 shrink-0" />
+                    <span>{t('settings.askBeforeDownload')}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                    {t('settings.askBeforeDownloadDesc')}
+                  </div>
+                </div>
+
+                <div className="relative inline-flex items-center shrink-0">
+                  <input
+                    id="settings-ask-before-download"
+                    type="checkbox"
+                    checked={draft.ask_before_download ?? false}
+                    onChange={(e) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        ask_before_download: e.target.checked,
                       }))
                     }
                     className="sr-only peer"

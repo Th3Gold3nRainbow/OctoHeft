@@ -5,6 +5,7 @@ import {
   DiskSpaceStats,
   DownloadCategory,
   DownloadProgressPayload,
+  DownloadPromptPayload,
   DownloadStatus,
   DownloadTask,
   AddDownloadRequest,
@@ -77,6 +78,7 @@ export const App: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [prefillUrl, setPrefillUrl] = useState('');
   const [prefillFileName, setPrefillFileName] = useState('');
+  const [prefillHeaders, setPrefillHeaders] = useState<Record<string, string> | undefined>(undefined);
   const [prefillFromClipboard, setPrefillFromClipboard] = useState(false);
   const [prefillIsMedia, setPrefillIsMedia] = useState(false);
   const [clipboardMonitorActive, setClipboardMonitorActive] = useState(false);
@@ -257,6 +259,7 @@ export const App: React.FC = () => {
     let unlistenSettings: (() => void) | null = null;
     let unlistenGrab: (() => void) | null = null;
     let unlistenClipboard: (() => void) | null = null;
+    let unlistenPrompt: (() => void) | null = null;
 
     invoke<VideoGrabberPayload | null>('take_pending_video_grab')
       .then((pending) => {
@@ -412,6 +415,43 @@ export const App: React.FC = () => {
       })
       .catch(console.error);
 
+    listen<DownloadPromptPayload>('download://prompt-new', (event) => {
+      const payload = event.payload;
+      if (!payload || !payload.url) return;
+
+      try {
+        if ('__TAURI_INTERNALS__' in window) {
+          const win = getCurrentWindow();
+          win.unminimize().catch(() => {});
+          win.show().catch(() => {});
+          win.setFocus().catch(() => {});
+        }
+      } catch {
+        // Ignore outside native Tauri runtime
+      }
+
+      setPrefillUrl(payload.url);
+      setPrefillFileName(payload.filename || '');
+      setPrefillHeaders(
+        payload.headers ||
+          (payload.cookies
+            ? {
+                Cookie: payload.cookies,
+                ...(payload.user_agent ? { 'User-Agent': payload.user_agent } : {}),
+                ...(payload.referrer ? { Referer: payload.referrer } : {}),
+              }
+            : undefined)
+      );
+      setPrefillFromClipboard(false);
+      setPrefillIsMedia(false);
+      setIsAddModalOpen(true);
+    })
+      .then((unlisten) => {
+        if (!active) unlisten();
+        else unlistenPrompt = unlisten;
+      })
+      .catch(console.error);
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.altKey && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();
@@ -430,6 +470,7 @@ export const App: React.FC = () => {
       if (unlistenSettings) unlistenSettings();
       if (unlistenGrab) unlistenGrab();
       if (unlistenClipboard) unlistenClipboard();
+      if (unlistenPrompt) unlistenPrompt();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
@@ -854,6 +895,7 @@ export const App: React.FC = () => {
         isOpen={isAddModalOpen}
         initialUrl={prefillUrl}
         initialFileName={prefillFileName}
+        initialHeaders={prefillHeaders}
         defaultDownloadDir={appSettings.default_download_dir}
         defaultConnections={appSettings.max_connections_per_download || 8}
         useCategorySubfolders={appSettings.use_category_subfolders}
@@ -863,6 +905,7 @@ export const App: React.FC = () => {
           setIsAddModalOpen(false);
           setPrefillUrl('');
           setPrefillFileName('');
+          setPrefillHeaders(undefined);
           setPrefillFromClipboard(false);
           setPrefillIsMedia(false);
         }}
@@ -871,6 +914,7 @@ export const App: React.FC = () => {
           setIsAddModalOpen(false);
           setPrefillUrl('');
           setPrefillFileName('');
+          setPrefillHeaders(undefined);
           setPrefillFromClipboard(false);
           setPrefillIsMedia(false);
           handleOpenZipPreview(u);
@@ -880,6 +924,7 @@ export const App: React.FC = () => {
           setIsAddModalOpen(false);
           setPrefillUrl('');
           setPrefillFileName('');
+          setPrefillHeaders(undefined);
           setPrefillFromClipboard(false);
           setPrefillIsMedia(false);
           triggerVideoGrab({ url: u });

@@ -302,6 +302,8 @@
   "settings.browseFolder": "Parcourir...",
   "settings.useSubfolders": "Classer les téléchargements par dossiers de catégorie",
   "settings.useSubfoldersDesc": "Si activé, les fichiers sont triés dans des sous-dossiers (ex. Vidéo, Compressés). Si désactivé, les fichiers sont enregistrés directement dans le dossier choisi sans sous-dossiers.",
+  "settings.askBeforeDownload": "Toujours demander où enregistrer avant de télécharger",
+  "settings.askBeforeDownloadDesc": "Lorsque cette option est activée, chaque téléchargement intercepté ou déclenché ouvre d'abord la boîte de dialogue pour vous permettre de choisir le dossier de destination et le mode de routage.",
   "settings.browserTitle": "Intégration Navigateur & Native Messaging Host",
   "settings.browserSubtitle": "Connecte Google Chrome, Microsoft Edge, Brave et Firefox directement à OctoHeft.exe",
   "settings.browserWizardBtn": "Assistant d'activation",

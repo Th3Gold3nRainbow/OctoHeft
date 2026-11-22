@@ -10,7 +10,7 @@ use engine::{
 use shell_integration::ShellIntegration;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 #[derive(Clone)]
 pub struct RuntimePaths {
@@ -82,11 +82,27 @@ pub fn run() {
     let initial_lang_for_tray = initial_settings.language.clone();
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.unminimize();
                 let _ = w.show();
                 let _ = w.set_focus();
+            }
+            for arg in args.into_iter().skip(1) {
+                let trimmed = arg.trim();
+                if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+                    let prompt = engine::native_host::DownloadPromptPayload {
+                        url: trimmed.to_string(),
+                        filename: None,
+                        headers: None,
+                        cookies: None,
+                        referrer: None,
+                        user_agent: None,
+                        total_bytes: None,
+                    };
+                    let _ = app.emit("download://prompt-new", &prompt);
+                    break;
+                }
             }
         }))
         .manage(runtime_paths)
