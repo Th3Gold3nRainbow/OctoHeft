@@ -165,8 +165,11 @@ fn enrich_windows_rc_and_recompile(out_path: &std::path::Path) {
 
 fn main() {
     println!("cargo:rerun-if-changed=Cargo.toml");
+    println!("cargo:rerun-if-changed=tauri.conf.json");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=icons/icon.ico");
+    println!("cargo:rerun-if-changed=nsis/installer.nsi");
+    println!("cargo:rerun-if-changed=nsis/hooks.nsh");
 
     tauri_build::build();
 
