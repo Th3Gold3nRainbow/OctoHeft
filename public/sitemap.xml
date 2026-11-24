@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://th3gold3nrainbow.github.io/OctoHeft/</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://th3gold3nrainbow.github.io/OctoHeft/assets/logo.png</image:loc>
+      <image:title>OctoHeft Logo</image:title>
+      <image:caption>OctoHeft - High-Speed Download Accelerator for Windows</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://th3gold3nrainbow.github.io/OctoHeft/assets/screenshots/main-dashboard.png</image:loc>
+      <image:title>OctoHeft Main Dashboard</image:title>
+      <image:caption>OctoHeft modern Fluent dashboard with real-time speed chart and download queue</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://th3gold3nrainbow.github.io/OctoHeft/assets/screenshots/octomedia-video-downloader.png</image:loc>
+      <image:title>OctoMedia Video Downloader</image:title>
+      <image:caption>Built-in stream sniffer and video downloader without external FFmpeg dependencies</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://th3gold3nrainbow.github.io/OctoHeft/assets/screenshots/queue-scheduler.png</image:loc>
+      <image:title>OctoHeft Queue Scheduler</image:title>
+      <image:caption>Scheduled downloads with bandwidth management and speed limiters</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://th3gold3nrainbow.github.io/OctoHeft/assets/screenshots/settings-dialog.png</image:loc>
+      <image:title>OctoHeft Settings Dialog</image:title>
+      <image:caption>Advanced settings, custom category routing, Win32 sparse file options, and theme selector</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://th3gold3nrainbow.github.io/OctoHeft/assets/screenshots/batch-downloader.png</image:loc>
+      <image:title>OctoHeft Batch Downloader</image:title>
+      <image:caption>Multi-URL and wildcard batch downloading</image:caption>
+    </image:image>
+  </url>
+</urlset>

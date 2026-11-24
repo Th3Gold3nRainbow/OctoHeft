@@ -1,0 +1,9 @@
+# robots.txt for OctoHeft (https://th3gold3nrainbow.github.io/OctoHeft/)
+User-agent: *
+Allow: /
+
+# Sitemap for Google Search Console & Search Engines
+Sitemap: https://th3gold3nrainbow.github.io/OctoHeft/sitemap.xml
+
+# LLM & AI Agent Discovery (https://llmstxt.org/)
+# https://th3gold3nrainbow.github.io/OctoHeft/llms.txt
