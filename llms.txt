@@ -1,0 +1,45 @@
+# OctoHeft
+
+> OctoHeft is a high-performance, open-source download accelerator and stream downloader for Windows (10/11 x64), developed in Rust and Tauri v2 with a React/TypeScript interface. It serves as a modern, lightweight, and zero-telemetry alternative to Internet Download Manager (IDM).
+
+## Overview
+
+OctoHeft combines the raw speed and memory safety of a compiled native Rust backend with a modern Fluent design aesthetic. Unlike legacy download managers that download chunks into separate temporary files and freeze your computer during a lengthy assembly phase at 99%, OctoHeft allocates sparse files directly on NTFS using native Win32 direct I/O. Each download chunk is written directly to its final physical offset on disk in parallel, achieving zero-assembly instant file completion.
+
+## Key Technical Specifications & Architecture
+
+- **Core Engine:** Written in Rust with Tokio asynchronous runtime and Reqwest HTTP client.
+- **Direct NTFS Sparse I/O:** Uses Win32 `FSCTL_SET_SPARSE` and positional atomic writes (`write_all_at`). Chunks are streamed directly to disk at their exact offset. No temporary assembly step at 99%.
+- **Parallel Chunk Acceleration:** Supports up to 32 concurrent HTTP/HTTPS connections per file with byte-range requests (`Range: bytes=X-Y`).
+- **Data Integrity & Byte Verification:** Strict RFC 9110 `HTTP 206 Partial Content` and `Content-Range` header verification. Enforces `Accept-Encoding: identity` to prevent decompression offset mismatches. Employs a 5-point completion verifier ensuring contiguous byte coverage (`0..=total_size-1`), `sync_all()` disk flush, and exact physical file size validation before marking tasks completed.
+- **Adaptive Concurrency & Rate-Limit Backoff:** Per-download `ConcurrencyGovernor` automatically steps down active streams (`16 -> 8 -> 4 -> 2 -> 1`) upon encountering `HTTP 429 Too Many Requests` or `HTTP 503 Service Unavailable`, applying exponential backoff with jitter and parsing `Retry-After` headers.
+- **Single-Stream & Unknown-Size Streams:** Automatic fallback and EOF handling for streams without `Content-Length` or range support.
+- **Native Browser Integration:** Companion Chromium Manifest V3 browser extension for Google Chrome, Microsoft Edge, Brave, and Opera communicating via native messaging and named pipes. Forwards cookies, User-Agent, and Referer headers for seamless authentication on protected file hosts.
+- **OctoMedia Video Sniffer:** Built-in video/audio stream sniffer supporting HLS/DASH and media streams, merging audio and video tracks natively without requiring external FFmpeg binaries.
+- **User Interface:** Lightweight Webview2 UI built with React and Tailwind CSS. Features Windows 11 Fluent Light mode and Modern Dark mode, real-time 200ms rolling telemetry, and full internationalization (English, French, German, Spanish, Italian, Japanese, Arabic with RTL).
+- **Executable Footprint:** Under 5 MB standalone binary, low RAM usage, zero background telemetry or bundled adware.
+
+## Distribution & Official Packages (v2.0.3)
+
+- **Official Website:** https://th3gold3nrainbow.github.io/OctoHeft/
+- **Source Code Repository:** https://github.com/Th3Gold3nRainbow/OctoHeft
+- **GitHub Releases:** https://github.com/Th3Gold3nRainbow/OctoHeft/releases
+- **Standard NSIS Setup:** `OctoHeft_2.0.3_x64-setup.exe` (Desktop & Start Menu shortcuts, uninstaller)
+- **Portable Edition:** `OctoHeft_2.0.3_portable.zip` (self-contained, extract and run)
+- **Standalone Executable:** `OctoHeft_2.0.3_standalone.exe` (single binary)
+- **Microsoft Store Package:** `OctoHeft_2.0.3_x64.msix` (Windows Store packaged)
+- **Browser Extension:** `OctoHeft_2.0.3_Chromium_MV3_Extension.zip` (Chrome Web Store / Chromium manual install)
+
+## System Requirements
+
+- **Operating System:** Windows 10 (1809+), Windows 11 (64-bit x64 architecture).
+- **Filesystem:** NTFS recommended for sparse file allocation acceleration.
+- **License:** MIT License (Open Source, Free Software).
+
+## Documentation & Links
+
+- [Official Website](https://th3gold3nrainbow.github.io/OctoHeft/)
+- [GitHub Repository](https://github.com/Th3Gold3nRainbow/OctoHeft)
+- [Architecture Deep-Dive](https://github.com/Th3Gold3nRainbow/OctoHeft/blob/main/ARCHITECTURE.md)
+- [Release Notes & Changelog](https://github.com/Th3Gold3nRainbow/OctoHeft/releases/tag/v2.0.3)
+- [XML Sitemap](https://th3gold3nrainbow.github.io/OctoHeft/sitemap.xml)

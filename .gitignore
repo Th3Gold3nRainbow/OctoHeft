@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-release/
+dist-msix/
+src-tauri/
+native_messaging/
+REA-Prompts/
+*.log
+*.tmp
