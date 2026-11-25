@@ -6,7 +6,15 @@
   <img src="docs/octoheft-logo.png" alt="OctoHeft Logo" width="100" />
 </p>
 
-[![OctoHeft | AlternativeTo](https://alternativeto.net/static/badges/badge-compact-color.svg)](https://alternativeto.net/software/octoheft/about/?utm_source=badge&utm_medium=referral)
+<p align="center">
+  <a href="https://alternativeto.net/software/octoheft/about/?utm_source=badge&utm_medium=referral" target="_blank">
+    <img src="https://alternativeto.net/static/badges/badge-compact-color.svg" alt="OctoHeft | AlternativeTo" height="54" style="vertical-align: middle;" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://get.microsoft.com/installer/download/9nxq1pczg93p?referrer=appbadge" target="_self">
+    <img src="https://get.microsoft.com/images/en-us%20light.svg" width="200" alt="Get it from Microsoft Store" style="vertical-align: middle;" />
+  </a>
+</p>
 
 ### *High-Speed, Zero-Assembly Parallel Download Accelerator for Windows*
 
